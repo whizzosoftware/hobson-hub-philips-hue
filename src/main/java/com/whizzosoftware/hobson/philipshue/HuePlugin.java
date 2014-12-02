@@ -7,11 +7,11 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue;
 
+import com.whizzosoftware.hobson.api.config.ConfigurationPropertyMetaData;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
 import com.whizzosoftware.hobson.api.disco.DeviceBridge;
 import com.whizzosoftware.hobson.api.plugin.AbstractHobsonPlugin;
-import com.whizzosoftware.hobson.bootstrap.api.config.ConfigurationMetaData;
-import com.whizzosoftware.hobson.bootstrap.api.plugin.PluginStatus;
+import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.philipshue.disco.HueBridgeDetector;
 import com.whizzosoftware.hobson.philipshue.disco.HueBridgeListener;
 import com.whizzosoftware.hobson.philipshue.api.*;
@@ -45,7 +45,7 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
     public HuePlugin(String pluginId) {
         this(pluginId, DEFAULT_REFRESH_INTERVAL_IN_SECONDS);
 
-        addConfigurationMetaData(new ConfigurationMetaData("bridge.host", "Hue Bridge", "${philipsHueBridge}The hostname or IP address of the Philips Hue Bridge", ConfigurationMetaData.Type.STRING));
+        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData("bridge.host", "Hue Bridge", "${philipsHueBridge}The hostname or IP address of the Philips Hue Bridge", ConfigurationPropertyMetaData.Type.STRING));
     }
 
     public HuePlugin(String pluginId, long refreshIntervalInSeconds) {

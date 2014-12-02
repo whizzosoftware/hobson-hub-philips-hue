@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue;
 
+import com.whizzosoftware.hobson.api.util.UserUtil;
 import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.HobsonVariableImpl;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
@@ -24,10 +25,8 @@ public class HueLightTest {
     @Test
     public void testNullUpdateDetection() throws Exception {
         MockVariableManager varProvider = new MockVariableManager();
-        MockConfigurationManager cm = new MockConfigurationManager();
         HuePlugin driver = new HuePlugin("id");
         driver.setVariableManager(varProvider);
-        driver.setConfigurationManager(cm);
         MockHueNetworkDelegate delegate = new MockHueNetworkDelegate();
         delegate.setLightState("1", new LightState(null, null, null, null, null, null, null, null));
         HueLight light = new HueLight(driver, "1", null, "Hue Light 1", delegate);
@@ -40,10 +39,8 @@ public class HueLightTest {
     @Test
     public void testUpdateDetection() throws Exception {
         MockVariableManager varManager = new MockVariableManager();
-        MockConfigurationManager cm = new MockConfigurationManager();
         HuePlugin driver = new HuePlugin("id");
         driver.setVariableManager(varManager);
-        driver.setConfigurationManager(cm);
         MockHueNetworkDelegate delegate = new MockHueNetworkDelegate();
 
         // start with one light in a known state
@@ -53,10 +50,10 @@ public class HueLightTest {
         HueLight light = new HueLight(driver, "1", null, "Hue Light 1", delegate);
         light.onStartup();
         assertEquals(0, varManager.getVariableUpdates().size());
-        HobsonVariable var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.ON);
+        HobsonVariable var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.ON);
         assertNotNull(var);
         assertNull(var.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.COLOR);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.COLOR);
         assertNotNull(var);
         assertNull(var.getValue());
 
@@ -69,31 +66,31 @@ public class HueLightTest {
         v = varManager.getVariableUpdates().get(1);
         assertEquals(VariableConstants.COLOR, v.getName());
         assertEquals("rgb(255,0,0)", v.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.ON);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.ON);
         assertEquals(true, var.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.COLOR);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.COLOR);
         assertEquals("rgb(255,0,0)", var.getValue());
 
         varManager.clearVariableUpdates();
 
         // set the device variable and check that there are no updates detected after refresh()
-        HobsonVariableImpl mdv = (HobsonVariableImpl)varManager.getDeviceVariable(driver.getId(), "1", VariableConstants.COLOR);
+        HobsonVariableImpl mdv = (HobsonVariableImpl)varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, driver.getId(), "1", VariableConstants.COLOR);
         mdv.setValue("rgb(255,0,0)");
-        mdv = (HobsonVariableImpl)varManager.getDeviceVariable(driver.getId(), "1", VariableConstants.ON);
+        mdv = (HobsonVariableImpl)varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, driver.getId(), "1", VariableConstants.ON);
         mdv.setValue(true);
         light.refresh();
         assertEquals(0, varManager.getVariableUpdates().size());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.ON);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.ON);
         assertEquals(true, var.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.COLOR);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.COLOR);
         assertEquals("rgb(255,0,0)", var.getValue());
 
         // set the light state again to same values and verify still no updates detected
         delegate.setLightState("1", new LightState(true, null, 255, 0, 0, null, null, true));
         light.refresh();
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.ON);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.ON);
         assertEquals(true, var.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.COLOR);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.COLOR);
         assertEquals("rgb(255,0,0)", var.getValue());
 
         // set the light state to new color value and verify one update detected
@@ -103,19 +100,17 @@ public class HueLightTest {
         v = varManager.getVariableUpdates().get(0);
         assertEquals(VariableConstants.COLOR, v.getName());
         assertEquals("rgb(0,255,0)", v.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.ON);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.ON);
         assertEquals(true, var.getValue());
-        var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.COLOR);
+        var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.COLOR);
         assertEquals("rgb(0,255,0)", var.getValue());
     }
 
     @Test
     public void testKnownLightStateToUnknown() throws HueException {
         MockVariableManager varManager = new MockVariableManager();
-        MockConfigurationManager cm = new MockConfigurationManager();
         HuePlugin driver = new HuePlugin("id");
         driver.setVariableManager(varManager);
-        driver.setConfigurationManager(cm);
         MockHueNetworkDelegate delegate = new MockHueNetworkDelegate();
         LightState state = new LightState(true, null, null, null, null, null, null, true);
         delegate.setLightState("1", state);
@@ -124,7 +119,7 @@ public class HueLightTest {
         HueLight light = new HueLight(driver, "1", null, "Hue Light 1", delegate);
         light.onStartup();
         assertEquals(0, varManager.getVariableUpdates().size());
-        HobsonVariable var = varManager.getDeviceVariable(light.getPluginId(), light.getId(), VariableConstants.ON);
+        HobsonVariable var = varManager.getDeviceVariable(UserUtil.DEFAULT_USER, UserUtil.DEFAULT_HUB, light.getPluginId(), light.getId(), VariableConstants.ON);
         assertNotNull(var);
         assertNull(var.getValue());
 

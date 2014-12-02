@@ -7,7 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.state;
 
-import com.whizzosoftware.hobson.bootstrap.api.plugin.PluginStatus;
+import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.philipshue.api.HueBridge;
 import com.whizzosoftware.hobson.philipshue.api.HueException;
 import org.slf4j.Logger;

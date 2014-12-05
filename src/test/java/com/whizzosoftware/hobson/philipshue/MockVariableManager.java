@@ -70,6 +70,11 @@ public class MockVariableManager implements VariableManager {
     }
 
     @Override
+    public Collection<String> getDeviceVariableChangeIds(String userId, String hubId, String pluginId, String deviceId) {
+        return null;
+    }
+
+    @Override
     public HobsonVariable getDeviceVariable(String userId, String hubId, String pluginId, String deviceId, String name) {
         PluginVariables dv = driverMap.get(pluginId);
         if (dv != null) {

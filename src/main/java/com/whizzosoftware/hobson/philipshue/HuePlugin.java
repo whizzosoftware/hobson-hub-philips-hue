@@ -9,10 +9,9 @@ package com.whizzosoftware.hobson.philipshue;
 
 import com.whizzosoftware.hobson.api.config.ConfigurationPropertyMetaData;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
-import com.whizzosoftware.hobson.api.disco.DeviceBridge;
 import com.whizzosoftware.hobson.api.plugin.AbstractHobsonPlugin;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
-import com.whizzosoftware.hobson.philipshue.disco.HueBridgeDetector;
+import com.whizzosoftware.hobson.philipshue.disco.HueBridgeAdvertisementListener;
 import com.whizzosoftware.hobson.philipshue.disco.HueBridgeListener;
 import com.whizzosoftware.hobson.philipshue.api.*;
 import com.whizzosoftware.hobson.philipshue.state.InitializingState;
@@ -37,7 +36,7 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
     private static final long DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 5;
 
     private long refreshIntervalInSeconds;
-    private HueBridgeDetector metaAnalyzer;
+    private HueBridgeAdvertisementListener advertisementListener;
     private String bridgeHost;
     private HueBridge channel;
     private State state = new InitializingState();
@@ -62,9 +61,8 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
         setBridgeHost((String)config.get("bridge.host"));
 
         // publish an analyzer that can detect Hue bridges via SSDP
-        metaAnalyzer = new HueBridgeDetector();
-        metaAnalyzer.setListener(this);
-        publishDeviceBridgeDetector(metaAnalyzer);
+        advertisementListener = new HueBridgeAdvertisementListener(this);
+        publishDeviceAdvertisementListener(HueBridgeAdvertisementListener.PROTOCOL_ID, advertisementListener);
     }
 
     @Override
@@ -113,12 +111,12 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
     // ***
 
     @Override
-    public void onHueHubFound(DeviceBridge bridge) {
-        String newBridgeHost = bridge.getValue();
-        if (newBridgeHost != null && bridgeHost == null) {
-            setPluginConfigurationProperty(getId(), "bridge.host", bridge.getValue());
+    public void onHueHubFound(String host) {
+        if (host != null && bridgeHost == null) {
+            setPluginConfigurationProperty(getId(), "bridge.host", host);
         }
     }
+
 
     // ***
     // HueNetworkDelegate methods

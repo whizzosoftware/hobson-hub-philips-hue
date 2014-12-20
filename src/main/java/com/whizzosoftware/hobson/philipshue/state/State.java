@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.state;
 
+import com.whizzosoftware.hobson.philipshue.api.dto.BridgeResponse;
+
 /**
  * An interface implemented by all classes that implement states of the finite state machine. The interface defines
  * event callbacks that can trigger state transitions.
@@ -21,7 +23,7 @@ public interface State {
      *
      * @return the next transition state
      */
-    public State onLoop(StateContext context);
+    public State onRefresh(StateContext context);
 
     /**
      * Callback when the bridge host configuration changes.
@@ -33,9 +35,30 @@ public interface State {
     public State onBridgeHostUpdate(StateContext context);
 
     /**
+     * Callback when a response from the bridge is received.
+     *
+     * @param context the state context
+     * @param response the response
+     *
+     * @return the next transition state
+     */
+    public State onBridgeResponse(StateContext context, BridgeResponse response);
+
+    /**
+     * Callback when a request to the bridge fails.
+     *
+     * @param context the state context
+     * @param t the cause of the failure
+     *
+     * @return the next transition state
+     */
+    public State onBridgeRequestFailure(StateContext context, Throwable t);
+
+    /**
      * Callback when a variable update request occurs.
      *
      * @param context the state context
+     * @param deviceId the device ID
      * @param name the variable name
      * @param value the variable value
      *

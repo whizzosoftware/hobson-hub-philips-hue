@@ -9,18 +9,27 @@ package com.whizzosoftware.hobson.philipshue;
 
 import com.whizzosoftware.hobson.api.config.ConfigurationPropertyMetaData;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
-import com.whizzosoftware.hobson.api.plugin.AbstractHobsonPlugin;
+import com.whizzosoftware.hobson.api.event.DeviceAdvertisementEvent;
+import com.whizzosoftware.hobson.api.event.EventTopics;
+import com.whizzosoftware.hobson.api.event.HobsonEvent;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
-import com.whizzosoftware.hobson.philipshue.disco.HueBridgeAdvertisementListener;
-import com.whizzosoftware.hobson.philipshue.disco.HueBridgeListener;
-import com.whizzosoftware.hobson.philipshue.api.*;
+import com.whizzosoftware.hobson.api.plugin.http.AbstractHttpClientPlugin;
+import com.whizzosoftware.hobson.philipshue.api.HttpContext;
+import com.whizzosoftware.hobson.philipshue.api.HueBridge;
+import com.whizzosoftware.hobson.philipshue.api.HueException;
+import com.whizzosoftware.hobson.philipshue.api.dto.*;
 import com.whizzosoftware.hobson.philipshue.state.InitializingState;
 import com.whizzosoftware.hobson.philipshue.state.State;
 import com.whizzosoftware.hobson.philipshue.state.StateContext;
+import com.whizzosoftware.hobson.ssdp.SSDPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.Dictionary;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The Philips Hue plugin. This uses a REST client to communicate with the Hue bridge in order to discover
@@ -28,7 +37,7 @@ import java.util.Dictionary;
  *
  * @author Dan Noguerol
  */
-public class HuePlugin extends AbstractHobsonPlugin implements StateContext, HueNetworkDelegate, HueBridgeListener {
+public class HuePlugin extends AbstractHttpClientPlugin implements StateContext, HttpContext {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static final String HUE_DEVICE = "whizzohobson";
@@ -36,15 +45,14 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
     private static final long DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 5;
 
     private long refreshIntervalInSeconds;
-    private HueBridgeAdvertisementListener advertisementListener;
-    private String bridgeHost;
-    private HueBridge channel;
+    private HueBridge bridge;
     private State state = new InitializingState();
+    private final HueBridgeList bridges = new HueBridgeList();
 
     public HuePlugin(String pluginId) {
         this(pluginId, DEFAULT_REFRESH_INTERVAL_IN_SECONDS);
 
-        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData("bridge.host", "Hue Bridge", "${philipsHueBridge}The hostname or IP address of the Philips Hue Bridge", ConfigurationPropertyMetaData.Type.STRING));
+        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData("bridge.host", "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge", ConfigurationPropertyMetaData.Type.STRING));
     }
 
     public HuePlugin(String pluginId, long refreshIntervalInSeconds) {
@@ -58,11 +66,12 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
 
     @Override
     public void onStartup(Dictionary config) {
-        setBridgeHost((String)config.get("bridge.host"));
-
-        // publish an analyzer that can detect Hue bridges via SSDP
-        advertisementListener = new HueBridgeAdvertisementListener(this);
-        publishDeviceAdvertisementListener(HueBridgeAdvertisementListener.PROTOCOL_ID, advertisementListener);
+        try {
+            setBridgeHost((String)config.get("bridge.host"));
+        } catch (HueException e) {
+            logger.error("Error starting Hue plugin", e);
+            setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Error starting Hue plugin. See the log for details."));
+        }
     }
 
     @Override
@@ -79,6 +88,12 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
         return refreshIntervalInSeconds;
     }
 
+    @Override
+    public String[] getEventTopics() {
+        // make sure we subscribe to SSDP device advertisement events
+        return new String[] { EventTopics.createDiscoTopic(SSDPPacket.PROTOCOL_ID) };
+    }
+
     protected void setState(State state) {
         if (this.state != state) {
             logger.debug("Changing to state: " + state);
@@ -89,15 +104,18 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
 
     @Override
     public void onRefresh() {
-        setState(state.onLoop(this));
+        setState(state.onRefresh(this));
     }
 
     @Override
     public void onPluginConfigurationUpdate(Dictionary config) {
-        String bridgeHost = (String)config.get("bridge.host");
-        if (bridgeHost == null || !bridgeHost.equals(this.bridgeHost)) {
-            this.bridgeHost = bridgeHost;
-            setState(state.onBridgeHostUpdate(this));
+        String host = (String)config.get("bridge.host");
+        if (bridge == null || !host.equals(bridge.getHost())) {
+            try {
+                setBridgeHost(host);
+            } catch (HueException e) {
+                // TODO: fail
+            }
         }
     }
 
@@ -106,30 +124,42 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
         setState(state.onSetVariable(this, deviceId, variableName, value));
     }
 
-    // ***
-    // HueBridgeMetaListener methods
-    // ***
-
     @Override
-    public void onHueHubFound(String host) {
-        if (host != null && bridgeHost == null) {
-            setPluginConfigurationProperty(getId(), "bridge.host", host);
+    public void onHobsonEvent(HobsonEvent event) {
+        super.onHobsonEvent(event);
+
+        if (event instanceof DeviceAdvertisementEvent) {
+            DeviceAdvertisementEvent adv = (DeviceAdvertisementEvent)event;
+            try {
+                String host = bridges.addDeviceAdvertisement(adv.getAdvertisement());
+                if (host != null) {
+                    logger.info("Found Hue bridge at {}", host);
+                    setPluginConfigurationProperty(getId(), "bridge.host", host);
+                }
+            } catch (URISyntaxException e) {
+                logger.debug("Ignoring invalid Philips Hue bridge data: {}", adv.getAdvertisement().getRawData());
+            }
         }
     }
 
-
     // ***
-    // HueNetworkDelegate methods
+    // AbstractHttpClientPlugin methods
     // ***
 
     @Override
-    public void setLightState(String id, LightState lightState) throws HueException {
-        channel.setLightState(id, lightState);
+    protected void onHttpResponse(int statusCode, List<Map.Entry<String, String>> headers, String response, Object context) {
+        logger.trace("Received HTTP response");
+        try {
+            BridgeResponse br = bridge.parseResponse(context, statusCode, response);
+            setState(state.onBridgeResponse(this, br));
+        } catch (HueException e) {
+            logger.error("Error processing bridge response", e);
+        }
     }
 
     @Override
-    public LightState getLightState(String id) throws HueException {
-        return channel.getLightAttributeAndState(id);
+    protected void onHttpRequestFailure(Throwable cause, Object context) {
+        state.onBridgeRequestFailure(this, cause);
     }
 
     // ***
@@ -152,28 +182,72 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
     }
 
     @Override
+    public void onLightState(String deviceId, LightState state) {
+        HueLight light = getHueLight(deviceId);
+        if (light != null) {
+            light.onLightState(state);
+        } else {
+            logger.error("Attempt to update state for non-existent Hue device: {}", deviceId);
+        }
+    }
+
+    @Override
+    public void onSetVariable(String deviceId, String name, Object value) {
+        HueLight light = getHueLight(deviceId);
+        if (light != null) {
+            light.onSetVariable(name, value);
+        } else {
+            logger.error("Attempt to set variable for non-existent Hue device: {}", deviceId);
+        }
+    }
+
+    @Override
     public String getBridgeHost() {
-        return bridgeHost;
-    }
-
-    public void setBridgeHost(String bridgeHost) {
-        this.bridgeHost = bridgeHost;
+        return (bridge != null) ? bridge.getHost() : null;
     }
 
     @Override
-    public HueBridge getHueChannel() {
-        return channel;
+    public void sendCreateUserRequest(CreateUserRequest request) {
+        try {
+            bridge.sendCreateUserRequest(this, request);
+        } catch (HueException e) {
+            logger.error("Error sending CreateUser request", e);
+        }
     }
 
     @Override
-    public void setHueChannel(HueBridge channel) {
-        this.channel = channel;
+    public void sendGetAllLightsRequest(GetAllLightsRequest request) {
+        try {
+            bridge.sendGetAllLightsRequest(this, request);
+            logger.trace("Sent GetAllLights request");
+        } catch (HueException e) {
+            logger.error("Error sending GetAllLights request", e);
+        }
     }
 
     @Override
-    public void closeHueChannel() {
-        unpublishAllDevices();
-        channel = null;
+    public void sendGetLightAttributeAndStateRequest(GetLightAttributeAndStateRequest request) {
+        try {
+            bridge.sendGetLightAttributeAndStateRequest(this, request);
+        } catch (HueException e) {
+            logger.error("Error sending GetLightAttributeAndState request", e);
+        }
+    }
+
+    @Override
+    public void sendSetLightStateRequest(SetLightStateRequest request) {
+        try {
+            bridge.sendSetLightStateRequest(this, request);
+        } catch (HueException e) {
+            logger.error("Error sending SetLightState request", request);
+        }
+    }
+
+    public void setBridgeHost(String host) throws HueException {
+        if (host != null) {
+            bridge = new HueBridge(host, HUE_DEVICE, HUE_USER);
+            setState(state.onBridgeHostUpdate(this));
+        }
     }
 
     @Override
@@ -188,22 +262,8 @@ public class HuePlugin extends AbstractHobsonPlugin implements StateContext, Hue
         return hasDevice(deviceId);
     }
 
-    @Override
+    //@Override
     public HueLight getHueLight(String deviceId) {
         return (HueLight)getDevice(deviceId);
-    }
-
-    @Override
-    public void refreshAllLights() {
-        executeInEventLoop(new Runnable() {
-            @Override
-            public void run() {
-                for (HobsonDevice device : getAllDevices()) {
-                    if (device instanceof HueLight) {
-                        ((HueLight)device).refresh();
-                    }
-                }
-            }
-        });
     }
 }

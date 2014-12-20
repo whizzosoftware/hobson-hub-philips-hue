@@ -13,8 +13,10 @@ import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
 import com.whizzosoftware.hobson.philipshue.api.ColorConversion;
-import com.whizzosoftware.hobson.philipshue.api.HueException;
-import com.whizzosoftware.hobson.philipshue.api.LightState;
+import com.whizzosoftware.hobson.philipshue.api.dto.LightState;
+import com.whizzosoftware.hobson.philipshue.api.dto.GetLightAttributeAndStateRequest;
+import com.whizzosoftware.hobson.philipshue.api.dto.SetLightStateRequest;
+import com.whizzosoftware.hobson.philipshue.state.StateContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,22 +31,22 @@ import java.util.List;
 public class HueLight extends AbstractHobsonDevice {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final HueNetworkDelegate delegate;
     private final String model;
+    private StateContext context;
 
     /**
      * Constructor.
      *
      * @param plugin the HobsonPlugin that created this device
      * @param id the ID of the device on the Hue network
+     * @param model the device model
      * @param defaultName the device's default name
-     * @param delegate a delegate interface the device uses to communicate with the Hue network
      */
-    public HueLight(HuePlugin plugin, String id, String model, String defaultName, HueNetworkDelegate delegate) {
+    public HueLight(HuePlugin plugin, String id, String model, String defaultName, StateContext context) {
         super(plugin, id);
         this.model = model;
         setDefaultName(defaultName);
-        this.delegate = delegate;
+        this.context = context;
     }
 
     @Override
@@ -70,103 +72,95 @@ public class HueLight extends AbstractHobsonDevice {
 
     @Override
     public void onSetVariable(String variableName, Object value) {
-        try {
+        logger.debug("Setting variable for device {} ({}={})", getId(), variableName, value);
+
+        Boolean on = null;
+        Integer brightness = null;
+        Integer red = null;
+        Integer green = null;
+        Integer blue = null;
+
+        if (VariableConstants.ON.equals(variableName)) {
+            if (value instanceof String) {
+                on = Boolean.parseBoolean((String) value);
+            } else if (value instanceof Boolean) {
+                on = (Boolean)value;
+            }
+        } else if (VariableConstants.COLOR.equals(variableName)) {
             logger.debug("Setting variable for device {} ({}={})", getId(), variableName, value);
-
-            Boolean on = null;
-            Integer brightness = null;
-            Integer red = null;
-            Integer green = null;
-            Integer blue = null;
-
-            if (VariableConstants.ON.equals(variableName)) {
-                if (value instanceof String) {
-                    on = Boolean.parseBoolean((String) value);
-                } else if (value instanceof Boolean) {
-                    on = (Boolean)value;
-                }
-            } else if (VariableConstants.COLOR.equals(variableName)) {
-                logger.debug("Setting variable for device {} ({}={})", getId(), variableName, value);
-                ColorConversion.Color color = ColorConversion.createColorFromRGBString((String)value);
-                if (color != null) {
-                    red = color.r;
-                    green = color.g;
-                    blue = color.b;
-                }
-            } else if (VariableConstants.LEVEL.equals(variableName)) {
-                brightness = convertLevelToBrightness((Integer)value);
+            ColorConversion.Color color = ColorConversion.createColorFromRGBString((String)value);
+            if (color != null) {
+                red = color.r;
+                green = color.g;
+                blue = color.b;
             }
+        } else if (VariableConstants.LEVEL.equals(variableName)) {
+            brightness = convertLevelToBrightness((Integer)value);
+        }
 
-            if (on != null || brightness != null || red != null) {
-                LightState state = new LightState(on, brightness, red, green, blue, null, model, null);
-                logger.debug("New state for device {} is {}", getId(), state);
-                delegate.setLightState(getId(), state);
-            }
-
-        } catch (HueException e) {
-            logger.error("Error sending command to Hue bridge", e);
+        if (on != null || brightness != null || red != null) {
+            LightState state = new LightState(on, brightness, red, green, blue, null, model, null);
+            logger.debug("New state for device {} is {}", getId(), state);
+            context.sendSetLightStateRequest(new SetLightStateRequest(getId(), state));
         }
     }
 
     public void refresh() {
         logger.debug("Refreshing device {}", getId());
-        try {
-            LightState state = delegate.getLightState(getId());
-            if (state != null) {
-                List<VariableUpdate> updates = null;
+        context.sendGetLightAttributeAndStateRequest(new GetLightAttributeAndStateRequest(getId()));
+    }
 
-                HobsonVariable var = getVariable(VariableConstants.ON);
-                if (var != null) {
-                    Boolean on = state.getOn();
-                    if (!state.isReachable()) {
-                        on = null;
-                    }
-                    if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
-                        logger.debug("Detected change in on status for {}: {} (old value was {})", getId(), state.getOn(), var.getValue());
-                        updates = new ArrayList<VariableUpdate>();
-                        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, on, System.currentTimeMillis()));
-                    }
+    public void onLightState(LightState state) {
+        if (state != null) {
+            List<VariableUpdate> updates = null;
+
+            HobsonVariable var = getVariable(VariableConstants.ON);
+            if (var != null) {
+                Boolean on = state.getOn();
+                if (!state.isReachable()) {
+                    on = null;
                 }
-
-                var = getVariable(VariableConstants.COLOR);
-                if (var != null) {
-                    String color = convertLightStateToColor(state);
-                    if (!state.isReachable()) {
-                        color = null;
-                    }
-                    if ((var.getValue() == null && color != null) || (color != null && !var.getValue().equals(color))) {
-                        logger.debug("Detected change in color status for {}: {} (old value was {})", getId(), color, var.getValue());
-                        if (updates == null) {
-                            updates = new ArrayList<VariableUpdate>();
-                        }
-                        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, color, System.currentTimeMillis()));
-                    }
-                }
-
-                var = getVariable(VariableConstants.LEVEL);
-                if (var != null) {
-                    Integer level = convertBrightnessToLevel(state.getBrightness());
-                    if (!state.isReachable()) {
-                        level = null;
-                    }
-                    if ((var.getValue() == null && level != null) || (level != null && !var.getValue().equals(level))) {
-                        logger.debug("Detected change in level status for {}: {} (old value was {})", getId(), level, var.getValue());
-                        if (updates == null) {
-                            updates = new ArrayList<VariableUpdate>();
-                        }
-                        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, level, System.currentTimeMillis()));
-                    }
-                }
-
-                if (updates != null) {
-                    fireVariableUpdateNotifications(updates);
+                if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
+                    logger.debug("Detected change in on status for {}: {} (old value was {})", getId(), state.getOn(), var.getValue());
+                    updates = new ArrayList<VariableUpdate>();
+                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, on, System.currentTimeMillis()));
                 }
             }
-        } catch (HueException e) {
-            logger.error("Error refreshing device " + getId(), e);
-        }
 
-        logger.trace("Refresh of device {} complete", getId());
+            var = getVariable(VariableConstants.COLOR);
+            if (var != null) {
+                String color = convertLightStateToColor(state);
+                if (!state.isReachable()) {
+                    color = null;
+                }
+                if ((var.getValue() == null && color != null) || (color != null && !var.getValue().equals(color))) {
+                    logger.debug("Detected change in color status for {}: {} (old value was {})", getId(), color, var.getValue());
+                    if (updates == null) {
+                        updates = new ArrayList<VariableUpdate>();
+                    }
+                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, color, System.currentTimeMillis()));
+                }
+            }
+
+            var = getVariable(VariableConstants.LEVEL);
+            if (var != null) {
+                Integer level = convertBrightnessToLevel(state.getBrightness());
+                if (!state.isReachable()) {
+                    level = null;
+                }
+                if ((var.getValue() == null && level != null) || (level != null && !var.getValue().equals(level))) {
+                    logger.debug("Detected change in level status for {}: {} (old value was {})", getId(), level, var.getValue());
+                    if (updates == null) {
+                        updates = new ArrayList<VariableUpdate>();
+                    }
+                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, level, System.currentTimeMillis()));
+                }
+            }
+
+            if (updates != null) {
+                fireVariableUpdateNotifications(updates);
+            }
+        }
     }
 
     protected Integer convertBrightnessToLevel(Integer brightness) {

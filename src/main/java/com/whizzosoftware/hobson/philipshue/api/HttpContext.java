@@ -7,35 +7,16 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.api;
 
+import java.net.URI;
+import java.util.Map;
+
 /**
- * Represents a Hue light as the Hue bridge sees it.
+ * An interface used by HueBridge objects to send HTTP requests to the Hue hub.
  *
  * @author Dan Noguerol
  */
-public class Light {
-    private String id;
-    private String name;
-    private String model;
-
-    public Light(String id, String name, String model) {
-        this.id = id;
-        this.name = name;
-        this.model = model;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public String toString() {
-        return this.id + ":" + getName();
-    }
+public interface HttpContext {
+    public void sendHttpGetRequest(URI uri, Map<String,String> headers, Object context);
+    public void sendHttpPostRequest(URI uri, Map<String,String> headers, byte[] data, Object context);
+    public void sendHttpPutRequest(URI uri, Map<String,String> headers, byte[] data, Object context);
 }

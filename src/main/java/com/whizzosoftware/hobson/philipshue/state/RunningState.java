@@ -8,9 +8,7 @@
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
-import com.whizzosoftware.hobson.philipshue.HueLight;
-import com.whizzosoftware.hobson.philipshue.api.HueException;
-import com.whizzosoftware.hobson.philipshue.api.Light;
+import com.whizzosoftware.hobson.philipshue.api.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +21,12 @@ public class RunningState implements State {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private boolean hasRunningStatus = false;
+    private boolean hasPendingGetAllLightsRequest = false;
 
     @Override
-    public State onLoop(StateContext context) {
+    public State onRefresh(StateContext context) {
+        logger.trace("onRefresh()");
+
         // set the plugin status to running
         if (!hasRunningStatus) {
             context.setPluginStatus(new PluginStatus(PluginStatus.Status.RUNNING));
@@ -33,19 +34,10 @@ public class RunningState implements State {
         }
 
         // get an updated list of lights
-        try {
-            for (Light light : context.getHueChannel().getAllLights()) {
-                // create any lights we don't already know about
-                if (!context.hasHueLight(light.getId())) {
-                    context.createHueLight(light);
-                }
-            }
-        } catch (HueException e) {
-            logger.error("Error retrieving light data from bridge", e);
+        if (!hasPendingGetAllLightsRequest) {
+            context.sendGetAllLightsRequest(new GetAllLightsRequest());
+            hasPendingGetAllLightsRequest = true;
         }
-
-        // refresh any lights we do know about
-        context.refreshAllLights();
 
         return this;
     }
@@ -57,11 +49,40 @@ public class RunningState implements State {
     }
 
     @Override
-    public State onSetVariable(StateContext context, String deviceId, String name, Object value) {
-        HueLight light = context.getHueLight(deviceId);
-        if (light != null) {
-            light.onSetVariable(name, value);
+    public State onBridgeResponse(StateContext context, BridgeResponse response) {
+        if (response instanceof GetAllLightsResponse) {
+            hasPendingGetAllLightsRequest = false;
+            GetAllLightsResponse galr = (GetAllLightsResponse)response;
+            for (Light light : galr.getLights()) {
+                // create any lights we don't already know about
+                if (!context.hasHueLight(light.getId())) {
+                    context.createHueLight(light);
+                } else {
+                    // if there's a state key in the light data (some firmware versions), use it
+                    if (light.getState() != null) {
+                        context.onLightState(light.getId(), light.getState());
+                    // otherwise, we have to request it specifically
+                    } else {
+                        context.sendGetLightAttributeAndStateRequest(new GetLightAttributeAndStateRequest(light.getId()));
+                    }
+                }
+            }
+        } else if (response instanceof GetLightAttributeAndStateResponse) {
+            GetLightAttributeAndStateResponse glasr = (GetLightAttributeAndStateResponse)response;
+            context.onLightState(glasr.getId(), glasr.getState());
         }
+        return this;
+    }
+
+    @Override
+    public State onBridgeRequestFailure(StateContext context, Throwable t) {
+        logger.warn("Error while requesting light information from Hue bridge; will retry", t);
+        return this;
+    }
+
+    @Override
+    public State onSetVariable(StateContext context, String deviceId, String name, Object value) {
+        context.onSetVariable(deviceId, name, value);
         return this;
     }
 }

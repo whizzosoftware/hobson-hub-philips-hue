@@ -8,8 +8,7 @@
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
-import com.whizzosoftware.hobson.philipshue.api.HueBridge;
-import com.whizzosoftware.hobson.philipshue.api.HueException;
+import com.whizzosoftware.hobson.philipshue.api.dto.BridgeResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,28 +21,20 @@ public class InitializingState implements State {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public State onLoop(StateContext context) {
-        State nextState = this;
-
-        // close any previous Hue channel
-        context.closeHueChannel();
+    public State onRefresh(StateContext context) {
+        State nextState;
 
         // grab the bridge host from the config
         String bridgeHost = context.getBridgeHost();
 
         if (bridgeHost != null) {
             // create new Hue channel
-            try {
-                logger.debug("Using Hue bridge at {}", bridgeHost);
-                context.setHueChannel(new HueBridge(bridgeHost, context.getHueDeviceString(), context.getHueUserString()));
-                nextState = new AuthorizingState();
-            } catch (HueException e) {
-                logger.error("Error initializing connection to Hue bridge", e);
-            }
+            logger.debug("Using Hue bridge at {}", bridgeHost);
+            nextState = new AuthorizingState();
         } else {
-            logger.warn("Plugin is not configured");
+            logger.debug("The Hue plugin is not configured.");
             context.setPluginStatus(new PluginStatus(PluginStatus.Status.NOT_CONFIGURED, "The plugin is not configured"));
-            return new FailedState();
+            nextState = new FailedState();
         }
 
         return nextState;
@@ -51,6 +42,16 @@ public class InitializingState implements State {
 
     @Override
     public State onBridgeHostUpdate(StateContext context) {
+        return this;
+    }
+
+    @Override
+    public State onBridgeResponse(StateContext context, BridgeResponse response) {
+        return this;
+    }
+
+    @Override
+    public State onBridgeRequestFailure(StateContext context, Throwable t) {
         return this;
     }
 

@@ -9,31 +9,29 @@ package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.philipshue.api.dto.BridgeResponse;
+import com.whizzosoftware.hobson.philipshue.api.dto.CreateUserRequest;
+import com.whizzosoftware.hobson.philipshue.api.dto.CreateUserResponse;
 import com.whizzosoftware.hobson.philipshue.api.dto.ErrorResponse;
-import com.whizzosoftware.hobson.philipshue.api.dto.GetAllLightsRequest;
-import com.whizzosoftware.hobson.philipshue.api.dto.GetAllLightsResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A state representing the authorization process. This includes detecting if API calls can be made, creating a
- * Hobson user if one doesn't exist and checking if the Hue Bridge button needs to be pressed.
+ * A state representing the process of creating a Hobson specific user on the Hue bridge.
  *
  * @author Dan Noguerol
  */
-public class AuthorizingState extends AbstractTimeoutState {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+public class CreateUserState extends AbstractTimeoutState {
+    private final static Logger logger = LoggerFactory.getLogger(CreateUserState.class);
 
-    @Override
     public State onRefresh(StateContext ctx, long now) {
-        State s = super.onRefresh(ctx, now);
+        State state = super.onRefresh(ctx, now);
 
-        if (s instanceof FailedState) {
-            logger.warn("Timeout waiting for Hue bridge to respond to GetAllLights request");
+        if (state instanceof FailedState) {
+            logger.warn("Timeout waiting for Hue bridge to respond to CreateUser request");
             ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Timeout waiting for response from Hue bridge. See log for details."));
         }
 
-        return s;
+        return state;
     }
 
     @Override
@@ -43,41 +41,37 @@ public class AuthorizingState extends AbstractTimeoutState {
 
     @Override
     public State onBridgeResponse(StateContext context, BridgeResponse response) {
-        if (response instanceof GetAllLightsResponse) {
+        if (response instanceof CreateUserResponse) {
             return new RunningState();
         } else if (response instanceof ErrorResponse) {
             ErrorResponse er = (ErrorResponse)response;
-            if (er.getType() == ErrorResponse.UNAUTHORIZED_USER) {
-                logger.debug("Received unauthorized user response; attempting to create user");
-                return new CreateUserState();
-            } else {
-                logger.error("Received unexpected error from Hue Bridge: {}", er);
-                context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received unexpected error from Hue Bridge. See log for details."));
-                return new FailedState();
+            if (er.getType() == ErrorResponse.LINK_BUTTON_NOT_PRESSED) {
+                logger.debug("Plugin not authorized to talk to Hue bridge; waiting for user to press bridge button");
+                context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Hobson is not authorized to talk to the Hue bridge. Please press the button on your bridge within the next 30 seconds."));
+                return this;
             }
         }
 
-        logger.error("Received unexpected response from Hue Bridge: {}", response);
-        context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received unexpected response from Hue Bridge. See log for details."));
+        logger.warn("Received unexpected response to CreateUser request: {}", response);
+        context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Unable to create Hue bridge user. See log for details."));
         return new FailedState();
     }
 
     @Override
     public State onBridgeRequestFailure(StateContext ctx, Throwable t) {
-        logger.error("Error response received from Hue bridge while requesting list of lights", t);
+        logger.error("Error response received from Hue bridge while creating user", t);
         ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received error response from Hue bridge. See log for details."));
         return new FailedState();
     }
 
     @Override
     public State onSetVariable(StateContext context, String deviceId, String name, Object value) {
-        logger.debug("Received set variable request while waiting for authorization; ignoring");
         return this;
     }
 
     @Override
-    protected void performRequest(StateContext ctx) {
-        ctx.sendGetAllLightsRequest(new GetAllLightsRequest());
+    protected void performRequest(StateContext context) {
+        context.sendCreateUserRequest(new CreateUserRequest(context.getHueDeviceString(), context.getHueUserString()));
     }
 
     @Override

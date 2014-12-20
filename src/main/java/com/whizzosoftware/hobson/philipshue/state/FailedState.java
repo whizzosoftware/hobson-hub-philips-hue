@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.state;
 
+import com.whizzosoftware.hobson.philipshue.api.dto.BridgeResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ public class FailedState implements State {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public State onLoop(StateContext context) {
+    public State onRefresh(StateContext context) {
         // do nothing
         return this;
     }
@@ -28,6 +29,16 @@ public class FailedState implements State {
     public State onBridgeHostUpdate(StateContext context) {
         logger.debug("Bridge host updated: " + context.getBridgeHost());
         return new InitializingState();
+    }
+
+    @Override
+    public State onBridgeResponse(StateContext context, BridgeResponse response) {
+        return this;
+    }
+
+    @Override
+    public State onBridgeRequestFailure(StateContext context, Throwable t) {
+        return this;
     }
 
     @Override

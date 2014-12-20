@@ -5,11 +5,9 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package com.whizzosoftware.hobson.philipshue.api;
+package com.whizzosoftware.hobson.philipshue.api.dto;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.whizzosoftware.hobson.philipshue.api.ColorConversion;
 
 /**
  * Represents the state of a Hue light.
@@ -47,19 +45,10 @@ public class LightState {
         setReachable(reachable);
     }
 
-    public LightState(JSONObject obj) throws JSONException {
-        this.on = obj.getBoolean("on");
-        this.brightness = obj.getInt("bri");
-        if (obj.has("xy")) {
-            JSONArray a = obj.getJSONArray("xy");
-            this.x = new Float(a.getDouble(0));
-            this.y = new Float(a.getDouble(1));
-        }
-        this.effect = obj.getString("effect");
-        if (obj.has("modelid")) {
-            this.model = obj.getString("modelid");
-        }
-        this.reachable = obj.getBoolean("reachable");
+    public LightState() {}
+
+    public boolean hasOn() {
+        return (on != null);
     }
 
     public Boolean getOn() {
@@ -70,6 +59,10 @@ public class LightState {
         this.on = on;
     }
 
+    public boolean hasBrightness() {
+        return (brightness != null);
+    }
+
     public Integer getBrightness() {
         return brightness;
     }
@@ -78,20 +71,25 @@ public class LightState {
         this.brightness = brightness;
     }
 
-    public Float getX() {
-        return x;
+    public boolean hasXY() {
+        return (x != null && y != null);
     }
 
-    public void setX(Float x) {
-        this.x = x;
+    public Float getX() {
+        return x;
     }
 
     public Float getY() {
         return y;
     }
 
-    public void setY(Float y) {
+    public void setXY(Float x, Float y) {
+        this.x = x;
         this.y = y;
+    }
+
+    public boolean hasEffect() {
+        return (effect != null);
     }
 
     public String getEffect() {
@@ -120,26 +118,6 @@ public class LightState {
 
     public String toString() {
         return "LightState[on=" + getOn() + ",bri=" + getBrightness() + ",x=" + getX() + ",y=" + getY() + "]";
-    }
-
-    public String toJSONString() throws JSONException {
-        JSONObject json = new JSONObject();
-        if (this.on != null) {
-            json.put("on", this.on);
-        }
-        if (this.brightness != null) {
-            json.put("bri", this.brightness);
-        }
-        if ((this.on == null || this.on) && this.x != null && this.y != null) {
-            JSONArray a = new JSONArray();
-            a.put(this.x);
-            a.put(this.y);
-            json.put("xy", a);
-        }
-        if ((this.on == null || this.on) && this.effect != null) {
-            json.put("effect", this.effect);
-        }
-        return json.toString();
     }
 
     protected void setRGBColor(int cred, int cgreen, int cblue, String model) {

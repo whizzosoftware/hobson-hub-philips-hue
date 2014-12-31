@@ -32,6 +32,7 @@ public class LightState {
      * @param green green color value (0-255)
      * @param blue blue color value (0-255)
      * @param effect the effect
+     * @param model the model of light
      * @param reachable is light reachable?
      */
     public LightState(Boolean on, Integer brightness, Integer red, Integer green, Integer blue, String effect, String model, Boolean reachable) {

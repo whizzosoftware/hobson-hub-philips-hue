@@ -17,93 +17,92 @@ import com.whizzosoftware.hobson.philipshue.api.dto.*;
  * @author Dan Noguerol
  */
 public interface StateContext {
+    /**
+     * Returns the Hue device string to be used for API calls.
+     *
+     * @return String
+     */
     public String getHueDeviceString();
-    public String getHueUserString();
-    public String getBridgeHost();
-    public void sendCreateUserRequest(CreateUserRequest request);
-    public void sendGetAllLightsRequest(GetAllLightsRequest request);
-    public void sendGetLightAttributeAndStateRequest(GetLightAttributeAndStateRequest request);
-    public void sendSetLightStateRequest(SetLightStateRequest request);
-    public void setPluginStatus(PluginStatus status);
-    public void onLightState(String deviceId, LightState state);
-    public void onSetVariable(String deviceId, String name, Object value);
-    public void createHueLight(Light light);
-    public boolean hasHueLight(String deviceId);
 
-//    /**
-//     * Returns the Hue device string to be used for API calls.
-//     *
-//     * @return String
-//     */
-//    public String getHueDeviceString();
-//
-//    /**
-//     * Returns the Hue user string to be used for API calls.
-//     *
-//     * @return String
-//     */
-//    public String getHueUserString();
-//
-//    /**
-//     * Sets the plugin status.
-//     *
-//     * @param status the current status
-//     */
-//    public void setPluginStatus(PluginStatus status);
-//
-//    /**
-//     * Returns the currently configured bridge host.
-//     *
-//     * @return String
-//     */
-//    public String getBridgeHost();
-//
-//    /**
-//     * Returns the currently active HueChannel for making API calls.
-//     *
-//     * @return HueChannel
-//     */
-//    public HueBridge getHueBridge();
-//
-//    /**
-//     * Sets the currently active HueChannel for making API calls.
-//     *
-//     * @param hueBridge the active HueChannel instance
-//     */
-//    public void setHueChannel(HueBridge hueBridge);
-//
-//    /**
-//     * Closes the currently active HueChannel.
-//     */
-//    public void closeHueChannel();
-//
-//    /**
-//     * Creates a new HueLight based on a Light instance returned from an API call.
-//     *
-//     * @param light Light
-//     */
-//    public void createHueLight(Light light);
-//
-//    /**
-//     * Indicates whether a HueLight with the specified device ID exists.
-//     *
-//     * @param deviceId the device ID
-//     *
-//     * @return a boolean
-//     */
-//    public boolean hasHueLight(String deviceId);
-//
-//    /**
-//     * Returns the HueLight for the specified device ID.
-//     *
-//     * @param deviceId the device ID
-//     *
-//     * @return a HueLight instance (or null if not found)
-//     */
-//    public HueLight getHueLight(String deviceId);
-//
-//    /**
-//     * Refreshes all active HueLight instances.
-//     */
-//    public void refreshAllLights();
+    /**
+     * Returns the Hue user string to be used for API calls.
+     *
+     * @return String
+     */
+    public String getHueUserString();
+
+    /**
+     * Returns the currently configured bridge host.
+     *
+     * @return String
+     */
+    public String getBridgeHost();
+
+    /**
+     * Send a request to create a user to the Hue bridge.
+     *
+     * @param request the request object
+     */
+    public void sendCreateUserRequest(CreateUserRequest request);
+
+    /**
+     * Send a request for a list of all known lights to the Hue bridge.
+     *
+     * @param request the request object
+     */
+    public void sendGetAllLightsRequest(GetAllLightsRequest request);
+
+    /**
+     * Send a request for the state of a specific light to the Hue bridge.
+     *
+     * @param request the request object
+     */
+    public void sendGetLightAttributeAndStateRequest(GetLightAttributeAndStateRequest request);
+
+    /**
+     * Set the state of a specific light to the Hue bridge.
+     *
+     * @param request the request object
+     */
+    public void sendSetLightStateRequest(SetLightStateRequest request);
+
+    /**
+     * Sets the plugin status.
+     *
+     * @param status the current status
+     */
+    public void setPluginStatus(PluginStatus status);
+
+    /**
+     * Callback when state about a light is received from the Hue bridge.
+     *
+     * @param deviceId the device ID of the light
+     * @param state the current state of the light
+     */
+    public void onLightState(String deviceId, LightState state);
+
+    /**
+     * Callback when a request is received to set a device variable.
+     *
+     * @param deviceId the device ID of the light to update
+     * @param name the variable name
+     * @param value the variable value
+     */
+    public void onSetVariable(String deviceId, String name, Object value);
+
+    /**
+     * Creates a new HueLight based on a Light instance returned from an API call.
+     *
+     * @param light Light
+     */
+    public void createHueLight(Light light);
+
+    /**
+     * Indicates whether a HueLight with the specified device ID exists.
+     *
+     * @param deviceId the device ID
+     *
+     * @return a boolean
+     */
+    public boolean hasHueLight(String deviceId);
 }

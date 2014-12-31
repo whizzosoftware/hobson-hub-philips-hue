@@ -41,6 +41,7 @@ public class HueLight extends AbstractHobsonDevice {
      * @param id the ID of the device on the Hue network
      * @param model the device model
      * @param defaultName the device's default name
+     * @param context the StateContext instance to use
      */
     public HueLight(HuePlugin plugin, String id, String model, String defaultName, StateContext context) {
         super(plugin, id);

@@ -134,6 +134,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
                 String host = bridges.addDeviceAdvertisement(adv.getAdvertisement());
                 if (host != null) {
                     logger.info("Found Hue bridge at {}", host);
+                    // TODO: make sure not to overwrite this property
                     setPluginConfigurationProperty(getId(), "bridge.host", host);
                 }
             } catch (URISyntaxException e) {

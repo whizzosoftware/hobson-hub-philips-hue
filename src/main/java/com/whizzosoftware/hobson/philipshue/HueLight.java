@@ -13,6 +13,7 @@ import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
 import com.whizzosoftware.hobson.philipshue.api.ColorConversion;
+import com.whizzosoftware.hobson.philipshue.api.dto.Light;
 import com.whizzosoftware.hobson.philipshue.api.dto.LightState;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetLightAttributeAndStateRequest;
 import com.whizzosoftware.hobson.philipshue.api.dto.SetLightStateRequest;
@@ -33,6 +34,9 @@ public class HueLight extends AbstractHobsonDevice {
 
     private final String model;
     private StateContext context;
+    private Boolean initialOnValue;
+    private Integer initialLevel;
+    private String initialColor;
 
     /**
      * Constructor.
@@ -50,11 +54,21 @@ public class HueLight extends AbstractHobsonDevice {
         this.context = context;
     }
 
+    public HueLight(HuePlugin plugin, String id, String model, String defaultName, StateContext context, Light light) {
+        this(plugin, id, model, defaultName, context);
+
+        if (light != null && light.getState() != null) {
+            initialOnValue = light.getState().getOn();
+            initialLevel = convertBrightnessToLevel(light.getState().getBrightness());
+            initialColor = convertLightStateToColor(light.getState());
+        }
+    }
+
     @Override
     public void onStartup() {
-        publishVariable(VariableConstants.COLOR, null, HobsonVariable.Mask.READ_WRITE);
-        publishVariable(VariableConstants.LEVEL, null, HobsonVariable.Mask.READ_WRITE);
-        publishVariable(VariableConstants.ON, null, HobsonVariable.Mask.READ_WRITE);
+        publishVariable(VariableConstants.COLOR, initialColor, HobsonVariable.Mask.READ_WRITE);
+        publishVariable(VariableConstants.LEVEL, initialLevel, HobsonVariable.Mask.READ_WRITE);
+        publishVariable(VariableConstants.ON, initialOnValue, HobsonVariable.Mask.READ_WRITE);
     }
 
     @Override

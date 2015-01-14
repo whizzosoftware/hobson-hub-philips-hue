@@ -25,9 +25,7 @@ import com.whizzosoftware.hobson.ssdp.SSDPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
@@ -45,20 +43,12 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     private static final String HUE_USER = "whizzohobson";
     private static final long DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 5;
 
-    private long refreshIntervalInSeconds;
     private HueBridge bridge;
     private State state = new InitializingState();
     private final HueBridgeList bridges = new HueBridgeList();
 
     public HuePlugin(String pluginId) {
-        this(pluginId, DEFAULT_REFRESH_INTERVAL_IN_SECONDS);
-
-        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData("bridge.host", "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge", ConfigurationPropertyMetaData.Type.STRING));
-    }
-
-    public HuePlugin(String pluginId, long refreshIntervalInSeconds) {
         super(pluginId);
-        this.refreshIntervalInSeconds = refreshIntervalInSeconds;
     }
 
     // ***
@@ -67,6 +57,8 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public void onStartup(Dictionary config) {
+        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData("bridge.host", "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge", ConfigurationPropertyMetaData.Type.STRING));
+
         try {
             setBridgeHost((String)config.get("bridge.host"));
         } catch (HueException e) {
@@ -86,21 +78,13 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public long getRefreshInterval() {
-        return refreshIntervalInSeconds;
+        return DEFAULT_REFRESH_INTERVAL_IN_SECONDS;
     }
 
     @Override
     public String[] getEventTopics() {
         // make sure we subscribe to SSDP device advertisement events
         return new String[] { EventTopics.createDiscoTopic(SSDPPacket.PROTOCOL_ID) };
-    }
-
-    protected void setState(State state) {
-        if (this.state != state) {
-            logger.debug("Changing to state: " + state);
-            this.state = state;
-            onRefresh();
-        }
     }
 
     @Override
@@ -142,6 +126,18 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
                 logger.debug("Ignoring invalid Philips Hue bridge data: {}", adv.getAdvertisement().getRawData());
             }
         }
+    }
+
+    protected void setState(State state) {
+        if (this.state != state) {
+            logger.debug("Changing to state: " + state);
+            this.state = state;
+            onRefresh();
+        }
+    }
+
+    protected State getState() {
+        return state;
     }
 
     // ***
@@ -271,7 +267,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public void createHueLight(Light light) {
-        HueLight hlight = new HueLight(this, light.getId(), light.getModel(), light.getName(), this);
+        HueLight hlight = new HueLight(this, light.getId(), light.getModel(), light.getName(), this, light);
         publishDevice(hlight);
         logger.debug("Added Hue light {} as {}", light.getId(), hlight.getId());
     }

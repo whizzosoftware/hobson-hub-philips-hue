@@ -89,7 +89,7 @@ public class HueBridgeParser {
         if (o instanceof JSONObject) {
             JSONObject jsonObj = (JSONObject)o;
             if (logger.isTraceEnabled()) {
-                logger.trace("getLightAttributeAndState({}} response: {}", deviceId, jsonObj.toString());
+                logger.trace("getLightAttributeAndState({}) response: {}", deviceId, jsonObj.toString());
             }
             if (jsonObj.has("state")) {
                 return new GetLightAttributeAndStateResponse(deviceId, createLightState(jsonObj.getJSONObject("state")));
@@ -125,7 +125,7 @@ public class HueBridgeParser {
 
     protected void validateStatusCode(int statusCode) throws HueException {
         if (statusCode != 200) {
-            throw new HueException("Error setting light state; received status code " + statusCode);
+            throw new HueException("Error obtaining light state; received status code " + statusCode);
         }
     }
 

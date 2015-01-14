@@ -40,7 +40,7 @@ public class FailedStateTest {
     public void testOnBridgeRequestFailure() {
         MockStateContext ctx = new MockStateContext("host");
         FailedState state = new FailedState();
-        assertTrue(state.onBridgeRequestFailure(ctx, new Exception()) instanceof FailedState);
+        assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof FailedState);
     }
 
     @Test

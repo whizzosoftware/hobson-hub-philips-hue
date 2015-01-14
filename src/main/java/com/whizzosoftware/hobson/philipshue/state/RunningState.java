@@ -21,7 +21,6 @@ public class RunningState implements State {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private boolean hasRunningStatus = false;
-    private boolean hasPendingGetAllLightsRequest = false;
 
     @Override
     public State onRefresh(StateContext context) {
@@ -34,10 +33,7 @@ public class RunningState implements State {
         }
 
         // get an updated list of lights
-        if (!hasPendingGetAllLightsRequest) {
-            context.sendGetAllLightsRequest(new GetAllLightsRequest());
-            hasPendingGetAllLightsRequest = true;
-        }
+        context.sendGetAllLightsRequest(new GetAllLightsRequest());
 
         return this;
     }
@@ -51,7 +47,6 @@ public class RunningState implements State {
     @Override
     public State onBridgeResponse(StateContext context, BridgeResponse response) {
         if (response instanceof GetAllLightsResponse) {
-            hasPendingGetAllLightsRequest = false;
             GetAllLightsResponse galr = (GetAllLightsResponse)response;
             for (Light light : galr.getLights()) {
                 // create any lights we don't already know about
@@ -75,8 +70,18 @@ public class RunningState implements State {
     }
 
     @Override
-    public State onBridgeRequestFailure(StateContext context, Throwable t) {
-        logger.warn("Error while requesting light information from Hue bridge; will retry", t);
+    public State onBridgeRequestFailure(StateContext context, Object requestContext, Throwable t) {
+        // if a failure occurs getting state of all lights, invalidate all currently discovered lights
+        if (requestContext instanceof GetAllLightsRequest) {
+            logger.warn("Error while requesting light information from Hue bridge; will retry", t);
+            context.onAllLightStateFailure(t);
+        // if a failure occurs getting state of one light, invalidate just that light
+        } else if (requestContext instanceof GetLightAttributeAndStateRequest) {
+            GetLightAttributeAndStateRequest glasr = (GetLightAttributeAndStateRequest)requestContext;
+            context.onLightStateFailure(glasr.getId(), t);
+        } else {
+            logger.warn("Error while requesting light information from Hue bridge; will retry", t);
+        }
         return this;
     }
 

@@ -116,7 +116,7 @@ public class CreateUserStateTest {
         MockStateContext ctx = new MockStateContext("host");
         CreateUserState state = new CreateUserState();
         assertNull(ctx.getPluginStatus());
-        assertTrue(state.onBridgeRequestFailure(ctx, new Exception()) instanceof FailedState);
+        assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof FailedState);
         assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
     }
 

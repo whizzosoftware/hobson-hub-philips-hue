@@ -115,6 +115,8 @@ public class HueLight extends AbstractHobsonDevice {
         if (state != null) {
             List<VariableUpdate> updates = null;
 
+            long now = System.currentTimeMillis();
+
             HobsonVariable var = getVariable(VariableConstants.ON);
             if (var != null) {
                 Boolean on = state.getOn();
@@ -124,7 +126,7 @@ public class HueLight extends AbstractHobsonDevice {
                 if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
                     logger.debug("Detected change in on status for {}: {} (old value was {})", getId(), state.getOn(), var.getValue());
                     updates = new ArrayList<VariableUpdate>();
-                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, on, System.currentTimeMillis()));
+                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, on, now));
                 }
             }
 
@@ -139,7 +141,7 @@ public class HueLight extends AbstractHobsonDevice {
                     if (updates == null) {
                         updates = new ArrayList<VariableUpdate>();
                     }
-                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, color, System.currentTimeMillis()));
+                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, color, now));
                 }
             }
 
@@ -154,7 +156,7 @@ public class HueLight extends AbstractHobsonDevice {
                     if (updates == null) {
                         updates = new ArrayList<VariableUpdate>();
                     }
-                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, level, System.currentTimeMillis()));
+                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, level, now));
                 }
             }
 
@@ -162,6 +164,18 @@ public class HueLight extends AbstractHobsonDevice {
                 fireVariableUpdateNotifications(updates);
             }
         }
+    }
+
+    public void onLightStateFailure(Throwable t) {
+        logger.debug("Received failure for light " + getId(), t);
+
+        // set all variables to null to indicate that the current state of this light is now unknown
+        long now = System.currentTimeMillis();
+        List<VariableUpdate> updates = new ArrayList<>();
+        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, null, now));
+        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, null, now));
+        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, null, now));
+        fireVariableUpdateNotifications(updates);
     }
 
     protected Integer convertBrightnessToLevel(Integer brightness) {

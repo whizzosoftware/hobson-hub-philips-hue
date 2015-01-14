@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
@@ -160,7 +161,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     protected void onHttpRequestFailure(Throwable cause, Object context) {
-        state.onBridgeRequestFailure(this, cause);
+        state.onBridgeRequestFailure(this, context, cause);
     }
 
     // ***
@@ -184,17 +185,34 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public void onLightState(String deviceId, LightState state) {
-        HueLight light = getHueLight(deviceId);
+        HueLight light = (HueLight)getDevice(deviceId);
         if (light != null) {
             light.onLightState(state);
         } else {
-            logger.error("Attempt to update state for non-existent Hue device: {}", deviceId);
+            logger.error("Received state for unknown Hue device: {}", deviceId);
+        }
+    }
+
+    @Override
+    public void onLightStateFailure(String deviceId, Throwable t) {
+        HueLight light = (HueLight)getDevice(deviceId);
+        if (light != null) {
+            light.onLightStateFailure(t);
+        } else {
+            logger.error("Received state failure for unknown Hue device: {}", deviceId);
+        }
+    }
+
+    @Override
+    public void onAllLightStateFailure(Throwable t) {
+        for (HobsonDevice hd : getAllDevices()) {
+            ((HueLight)hd).onLightStateFailure(t);
         }
     }
 
     @Override
     public void onSetVariable(String deviceId, String name, Object value) {
-        HueLight light = getHueLight(deviceId);
+        HueLight light = (HueLight)getDevice(deviceId);
         if (light != null) {
             light.onSetVariable(name, value);
         } else {
@@ -261,10 +279,5 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     @Override
     public boolean hasHueLight(String deviceId) {
         return hasDevice(deviceId);
-    }
-
-    //@Override
-    public HueLight getHueLight(String deviceId) {
-        return (HueLight)getDevice(deviceId);
     }
 }

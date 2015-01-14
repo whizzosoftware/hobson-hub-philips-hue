@@ -48,11 +48,12 @@ public interface State {
      * Callback when a request to the bridge fails.
      *
      * @param context the state context
+     * @param requestContext the request associated with the failure
      * @param t the cause of the failure
      *
      * @return the next transition state
      */
-    public State onBridgeRequestFailure(StateContext context, Throwable t);
+    public State onBridgeRequestFailure(StateContext context, Object requestContext, Throwable t);
 
     /**
      * Callback when a variable update request occurs.

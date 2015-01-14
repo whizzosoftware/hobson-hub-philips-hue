@@ -37,7 +37,7 @@ public class FailedState implements State {
     }
 
     @Override
-    public State onBridgeRequestFailure(StateContext context, Throwable t) {
+    public State onBridgeRequestFailure(StateContext context, Object requestContext, Throwable t) {
         return this;
     }
 

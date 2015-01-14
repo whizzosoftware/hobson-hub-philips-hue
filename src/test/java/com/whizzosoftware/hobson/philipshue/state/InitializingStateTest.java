@@ -47,7 +47,7 @@ public class InitializingStateTest {
     public void testOnBridgeRequestFailure() {
         MockStateContext ctx = new MockStateContext("host");
         InitializingState state = new InitializingState();
-        assertTrue(state.onBridgeRequestFailure(ctx, new Exception()) instanceof InitializingState);
+        assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof InitializingState);
     }
 
     @Test

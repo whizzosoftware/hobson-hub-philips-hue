@@ -87,6 +87,14 @@ public class MockStateContext implements StateContext {
     }
 
     @Override
+    public void onLightStateFailure(String deviceId, Throwable t) {
+    }
+
+    @Override
+    public void onAllLightStateFailure(Throwable t) {
+    }
+
+    @Override
     public void onSetVariable(String deviceId, String name, Object value) {
     }
 

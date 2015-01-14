@@ -82,6 +82,21 @@ public interface StateContext {
     public void onLightState(String deviceId, LightState state);
 
     /**
+     * Callback when a failure to obtain the state of a light from the Hue bridge occurs.
+     *
+     * @param deviceId the device ID of the the light
+     * @param t the cause of the failure
+     */
+    public void onLightStateFailure(String deviceId, Throwable t);
+
+    /**
+     * Callback when a failure to obtain the state of all lights from the Hue bridge occurs.
+     *
+     * @param t the cause of the failure
+     */
+    public void onAllLightStateFailure(Throwable t);
+
+    /**
      * Callback when a request is received to set a device variable.
      *
      * @param deviceId the device ID of the light to update

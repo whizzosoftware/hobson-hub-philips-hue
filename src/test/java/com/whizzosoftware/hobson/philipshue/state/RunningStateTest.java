@@ -64,7 +64,7 @@ public class RunningStateTest {
     public void testOnBridgeReuqestFailure() {
         MockStateContext ctx = new MockStateContext("host");
         RunningState state = new RunningState();
-        assertTrue(state.onBridgeRequestFailure(ctx, new Exception()) instanceof RunningState);
+        assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof RunningState);
     }
 
     @Test

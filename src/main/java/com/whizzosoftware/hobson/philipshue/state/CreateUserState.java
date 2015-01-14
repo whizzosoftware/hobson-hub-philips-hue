@@ -58,7 +58,7 @@ public class CreateUserState extends AbstractTimeoutState {
     }
 
     @Override
-    public State onBridgeRequestFailure(StateContext ctx, Throwable t) {
+    public State onBridgeRequestFailure(StateContext ctx, Object requestContext, Throwable t) {
         logger.error("Error response received from Hue bridge while creating user", t);
         ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received error response from Hue bridge. See log for details."));
         return new FailedState();

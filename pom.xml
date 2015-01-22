@@ -4,7 +4,7 @@
     <groupId>com.whizzosoftware.hobson.hub</groupId>
     <artifactId>hobson-hub-philips-hue</artifactId>
     <packaging>bundle</packaging>
-    <version>0.3.0-SNAPSHOT</version>
+    <version>0.3.0</version>
     <name>Philips Hue Plugin</name>
     <description>Provides the ability to control the Philips Hue lighting system.</description>
     <dependencies>
@@ -160,7 +160,7 @@
     <scm>
         <connection>scm:git:ssh://git@github.com/whizzosoftware/hobson-hub-philips-hue.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/whizzosoftware/hobson-hub-philips-hue.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>hobson-hub-philips-hue-0.3.0</tag>
     </scm>
     <distributionManagement>
         <repository>

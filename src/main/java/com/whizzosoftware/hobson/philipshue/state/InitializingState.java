@@ -33,7 +33,7 @@ public class InitializingState implements State {
             nextState = new AuthorizingState();
         } else {
             logger.debug("The Hue plugin is not configured.");
-            context.setPluginStatus(new PluginStatus(PluginStatus.Status.NOT_CONFIGURED, "The plugin is not configured"));
+            context.setPluginStatus(PluginStatus.notConfigured("The plugin is not configured"));
             nextState = new FailedState();
         }
 

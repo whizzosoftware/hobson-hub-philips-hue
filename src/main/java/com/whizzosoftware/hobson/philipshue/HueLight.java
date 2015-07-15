@@ -9,6 +9,8 @@ package com.whizzosoftware.hobson.philipshue;
 
 import com.whizzosoftware.hobson.api.device.AbstractHobsonDevice;
 import com.whizzosoftware.hobson.api.device.DeviceType;
+import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
@@ -65,7 +67,7 @@ public class HueLight extends AbstractHobsonDevice {
     }
 
     @Override
-    public void onStartup() {
+    public void onStartup(PropertyContainer config) {
         publishVariable(VariableConstants.COLOR, initialColor, HobsonVariable.Mask.READ_WRITE);
         publishVariable(VariableConstants.LEVEL, initialLevel, HobsonVariable.Mask.READ_WRITE);
         publishVariable(VariableConstants.ON, initialOnValue, HobsonVariable.Mask.READ_WRITE);
@@ -86,8 +88,13 @@ public class HueLight extends AbstractHobsonDevice {
     }
 
     @Override
+    protected TypedProperty[] createSupportedProperties() {
+        return null;
+    }
+
+    @Override
     public void onSetVariable(String variableName, Object value) {
-        logger.debug("Setting variable for device {} ({}={})", getId(), variableName, value);
+        logger.debug("Setting variable for device {} ({}={})", getContext(), variableName, value);
 
         Boolean on = null;
         Integer brightness = null;
@@ -102,7 +109,7 @@ public class HueLight extends AbstractHobsonDevice {
                 on = (Boolean)value;
             }
         } else if (VariableConstants.COLOR.equals(variableName)) {
-            logger.debug("Setting variable for device {} ({}={})", getId(), variableName, value);
+            logger.debug("Setting variable for device {} ({}={})", getContext(), variableName, value);
             ColorConversion.Color color = ColorConversion.createColorFromRGBString((String)value);
             if (color != null) {
                 red = color.r;
@@ -115,14 +122,14 @@ public class HueLight extends AbstractHobsonDevice {
 
         if (on != null || brightness != null || red != null) {
             LightState state = new LightState(on, brightness, red, green, blue, null, model, null);
-            logger.debug("New state for device {} is {}", getId(), state);
-            context.sendSetLightStateRequest(new SetLightStateRequest(getId(), state));
+            logger.debug("New state for device {} is {}", getContext(), state);
+            context.sendSetLightStateRequest(new SetLightStateRequest(getContext().getDeviceId(), state));
         }
     }
 
     public void refresh() {
-        logger.debug("Refreshing device {}", getId());
-        context.sendGetLightAttributeAndStateRequest(new GetLightAttributeAndStateRequest(getId()));
+        logger.debug("Refreshing device {}", getContext());
+        context.sendGetLightAttributeAndStateRequest(new GetLightAttributeAndStateRequest(getContext().getDeviceId()));
     }
 
     public void onLightState(LightState state) {
@@ -138,9 +145,9 @@ public class HueLight extends AbstractHobsonDevice {
                     on = null;
                 }
                 if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
-                    logger.debug("Detected change in on status for {}: {} (old value was {})", getId(), state.getOn(), var.getValue());
-                    updates = new ArrayList<VariableUpdate>();
-                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, on, now));
+                    logger.debug("Detected change in on status for {}: {} (old value was {})", getContext(), state.getOn(), var.getValue());
+                    updates = new ArrayList<>();
+                    updates.add(new VariableUpdate(getContext(), VariableConstants.ON, on, now));
                 }
             }
 
@@ -151,11 +158,11 @@ public class HueLight extends AbstractHobsonDevice {
                     color = null;
                 }
                 if ((var.getValue() == null && color != null) || (color != null && !var.getValue().equals(color))) {
-                    logger.debug("Detected change in color status for {}: {} (old value was {})", getId(), color, var.getValue());
+                    logger.debug("Detected change in color status for {}: {} (old value was {})", getContext(), color, var.getValue());
                     if (updates == null) {
-                        updates = new ArrayList<VariableUpdate>();
+                        updates = new ArrayList<>();
                     }
-                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, color, now));
+                    updates.add(new VariableUpdate(getContext(), VariableConstants.COLOR, color, now));
                 }
             }
 
@@ -166,11 +173,11 @@ public class HueLight extends AbstractHobsonDevice {
                     level = null;
                 }
                 if ((var.getValue() == null && level != null) || (level != null && !var.getValue().equals(level))) {
-                    logger.debug("Detected change in level status for {}: {} (old value was {})", getId(), level, var.getValue());
+                    logger.debug("Detected change in level status for {}: {} (old value was {})", getContext(), level, var.getValue());
                     if (updates == null) {
-                        updates = new ArrayList<VariableUpdate>();
+                        updates = new ArrayList<>();
                     }
-                    updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, level, now));
+                    updates.add(new VariableUpdate(getContext(), VariableConstants.LEVEL, level, now));
                 }
             }
 
@@ -181,14 +188,14 @@ public class HueLight extends AbstractHobsonDevice {
     }
 
     public void onLightStateFailure(Throwable t) {
-        logger.debug("Received failure for light " + getId(), t);
+        logger.debug("Received failure for light " + getContext(), t);
 
         // set all variables to null to indicate that the current state of this light is now unknown
         long now = System.currentTimeMillis();
         List<VariableUpdate> updates = new ArrayList<>();
-        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.ON, null, now));
-        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.COLOR, null, now));
-        updates.add(new VariableUpdate(getPluginId(), getId(), VariableConstants.LEVEL, null, now));
+        updates.add(new VariableUpdate(getContext(), VariableConstants.ON, null, now));
+        updates.add(new VariableUpdate(getContext(), VariableConstants.COLOR, null, now));
+        updates.add(new VariableUpdate(getContext(), VariableConstants.LEVEL, null, now));
         fireVariableUpdateNotifications(updates);
     }
 

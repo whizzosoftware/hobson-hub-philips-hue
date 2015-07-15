@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.state;
 
+import com.whizzosoftware.hobson.philipshue.HuePlugin;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetAllLightsResponse;
 import org.junit.Test;
 import org.junit.internal.runners.statements.Fail;
@@ -16,7 +17,8 @@ import static org.junit.Assert.*;
 public class FailedStateTest {
     @Test
     public void testOnRefresh() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         FailedState state = new FailedState();
         assertTrue(state.onRefresh(ctx) instanceof FailedState);
         assertNull(ctx.getPluginStatus());
@@ -24,28 +26,32 @@ public class FailedStateTest {
 
     @Test
     public void testOnBridgeHostUpdated() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         FailedState state = new FailedState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
     }
 
     @Test
     public void testOnBridgeResponse() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         FailedState state = new FailedState();
         assertTrue(state.onBridgeResponse(ctx, new GetAllLightsResponse(null)) instanceof FailedState);
     }
 
     @Test
     public void testOnBridgeRequestFailure() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         FailedState state = new FailedState();
         assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof FailedState);
     }
 
     @Test
     public void testOnSetVariable() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         FailedState state = new FailedState();
         assertTrue(state.onSetVariable(ctx, "", "", "") instanceof FailedState);
     }

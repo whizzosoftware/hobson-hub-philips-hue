@@ -30,7 +30,7 @@ public class AuthorizingState extends AbstractTimeoutState {
 
         if (s instanceof FailedState) {
             logger.warn("Timeout waiting for Hue bridge to respond to GetAllLights request");
-            ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Timeout waiting for response from Hue bridge. See log for details."));
+            ctx.setPluginStatus(PluginStatus.failed("Timeout waiting for response from Hue bridge. See log for details."));
         }
 
         return s;
@@ -52,20 +52,20 @@ public class AuthorizingState extends AbstractTimeoutState {
                 return new CreateUserState();
             } else {
                 logger.error("Received unexpected error from Hue Bridge: {}", er);
-                context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received unexpected error from Hue Bridge. See log for details."));
+                context.setPluginStatus(PluginStatus.failed("Received unexpected error from Hue Bridge. See log for details."));
                 return new FailedState();
             }
         }
 
         logger.error("Received unexpected response from Hue Bridge: {}", response);
-        context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received unexpected response from Hue Bridge. See log for details."));
+        context.setPluginStatus(PluginStatus.failed("Received unexpected response from Hue Bridge. See log for details."));
         return new FailedState();
     }
 
     @Override
     public State onBridgeRequestFailure(StateContext ctx, Object requestContext, Throwable t) {
         logger.error("Error response received from Hue bridge while requesting list of lights", t);
-        ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received error response from Hue bridge. See log for details."));
+        ctx.setPluginStatus(PluginStatus.failed("Received error response from Hue bridge. See log for details."));
         return new FailedState();
     }
 

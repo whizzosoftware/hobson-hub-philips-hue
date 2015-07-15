@@ -9,12 +9,14 @@ package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.philipshue.HueLight;
+import com.whizzosoftware.hobson.philipshue.HuePlugin;
 import com.whizzosoftware.hobson.philipshue.api.dto.*;
 
 import java.util.*;
 
 public class MockStateContext implements StateContext {
     private String host;
+    private HuePlugin plugin;
     private PluginStatus status;
     private int getAllLightsRequests;
     private int createUserRequests;
@@ -22,7 +24,8 @@ public class MockStateContext implements StateContext {
     private List<SetLightStateRequest> setLightStateRequests = new ArrayList<>();
     private Map<String,HueLight> hueLights = new HashMap<>();
 
-    public MockStateContext(String host) {
+    public MockStateContext(HuePlugin plugin, String host) {
+        this.plugin = plugin;
         this.host = host;
     }
 
@@ -104,7 +107,7 @@ public class MockStateContext implements StateContext {
 
     @Override
     public void createHueLight(Light light) {
-        hueLights.put(light.getId(), new HueLight(null, light.getId(), "", "", this));
+        hueLights.put(light.getId(), new HueLight(plugin, light.getId(), "", "", this));
     }
 
     @Override

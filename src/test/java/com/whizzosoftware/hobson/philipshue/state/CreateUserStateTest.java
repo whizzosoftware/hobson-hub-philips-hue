@@ -8,6 +8,7 @@
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
+import com.whizzosoftware.hobson.philipshue.HuePlugin;
 import com.whizzosoftware.hobson.philipshue.api.dto.CreateUserResponse;
 import com.whizzosoftware.hobson.philipshue.api.dto.ErrorResponse;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetLightAttributeAndStateResponse;
@@ -18,7 +19,8 @@ import static org.junit.Assert.*;
 public class CreateUserStateTest {
     @Test
     public void testInit() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
 
@@ -29,7 +31,8 @@ public class CreateUserStateTest {
 
     @Test
     public void testInitWithUnexpectedResponse() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
 
@@ -37,12 +40,13 @@ public class CreateUserStateTest {
         assertEquals(1, ctx.getSendCreateUserRequestCount());
         assertTrue(state.onBridgeResponse(ctx, new GetLightAttributeAndStateResponse("", null)) instanceof FailedState);
         assertNotNull(ctx.getPluginStatus());
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testInitWithLinkButtonErrorResponse() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
 
@@ -54,7 +58,8 @@ public class CreateUserStateTest {
 
     @Test
     public void testInitWithOtherErrorResponse() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
 
@@ -62,12 +67,13 @@ public class CreateUserStateTest {
         assertEquals(1, ctx.getSendCreateUserRequestCount());
         assertTrue(state.onBridgeResponse(ctx, new ErrorResponse(ErrorResponse.UNAUTHORIZED_USER, null, null)) instanceof FailedState);
         assertNotNull(ctx.getPluginStatus());
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testInitWithTimeouts() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
 
@@ -101,28 +107,31 @@ public class CreateUserStateTest {
         assertTrue(state.onRefresh(ctx, now + state.getTimeout() + state.getTimeout() + state.getTimeout() + 100) instanceof FailedState);
         assertEquals(3, ctx.getSendCreateUserRequestCount());
         assertNotNull(ctx.getPluginStatus());
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testOnBridgeHostUpdate() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
     }
 
     @Test
     public void testOnBridgeRequestFailure() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertNull(ctx.getPluginStatus());
         assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof FailedState);
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testOnSetVariable() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertTrue(state.onSetVariable(ctx, "", "", "") instanceof CreateUserState);
     }

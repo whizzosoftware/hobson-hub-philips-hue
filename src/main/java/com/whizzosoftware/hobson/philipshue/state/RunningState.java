@@ -28,7 +28,7 @@ public class RunningState implements State {
 
         // set the plugin status to running
         if (!hasRunningStatus) {
-            context.setPluginStatus(new PluginStatus(PluginStatus.Status.RUNNING));
+            context.setPluginStatus(PluginStatus.running());
             hasRunningStatus = true;
         }
 

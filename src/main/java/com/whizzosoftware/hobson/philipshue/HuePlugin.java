@@ -7,13 +7,15 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue;
 
-import com.whizzosoftware.hobson.api.config.ConfigurationPropertyMetaData;
+import com.whizzosoftware.hobson.api.device.DeviceContext;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
 import com.whizzosoftware.hobson.api.event.DeviceAdvertisementEvent;
 import com.whizzosoftware.hobson.api.event.EventTopics;
 import com.whizzosoftware.hobson.api.event.HobsonEvent;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.api.plugin.http.AbstractHttpClientPlugin;
+import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.philipshue.api.HttpContext;
 import com.whizzosoftware.hobson.philipshue.api.HueBridge;
 import com.whizzosoftware.hobson.philipshue.api.HueException;
@@ -26,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +40,7 @@ import java.util.Map;
 public class HuePlugin extends AbstractHttpClientPlugin implements StateContext, HttpContext {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    public static final String PROP_BRIDGE_HOST = "bridge.host";
     private static final String HUE_DEVICE = "whizzohobson";
     private static final String HUE_USER = "whizzohobson";
     private static final long DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 5;
@@ -56,19 +58,20 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     // ***
 
     @Override
-    public void onStartup(Dictionary config) {
-        addConfigurationPropertyMetaData(new ConfigurationPropertyMetaData("bridge.host", "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge", ConfigurationPropertyMetaData.Type.STRING));
-
+    public void onStartup(PropertyContainer config) {
         try {
-            setBridgeHost((String)config.get("bridge.host"));
+            setBridgeHost((String)config.getPropertyValue(PROP_BRIDGE_HOST));
         } catch (HueException e) {
             logger.error("Error starting Hue plugin", e);
-            setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Error starting Hue plugin. See the log for details."));
+            setPluginStatus(PluginStatus.failed("Error starting Hue plugin. See the log for details."));
         }
     }
 
     @Override
-    public void onShutdown() {
+    protected TypedProperty[] createSupportedProperties() {
+        return new TypedProperty[] {
+            new TypedProperty(PROP_BRIDGE_HOST, "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge", TypedProperty.Type.STRING)
+        };
     }
 
     @Override
@@ -93,8 +96,8 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     }
 
     @Override
-    public void onPluginConfigurationUpdate(Dictionary config) {
-        String host = (String)config.get("bridge.host");
+    public void onPluginConfigurationUpdate(PropertyContainer config) {
+        String host = (String)config.getPropertyValue(PROP_BRIDGE_HOST);
         if (bridge == null || !host.equals(bridge.getHost())) {
             try {
                 setBridgeHost(host);
@@ -102,11 +105,6 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
                 // TODO: fail
             }
         }
-    }
-
-    @Override
-    public void onSetDeviceVariable(String deviceId, String variableName, Object value) {
-        setState(state.onSetVariable(this, deviceId, variableName, value));
     }
 
     @Override
@@ -120,7 +118,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
                 if (host != null) {
                     logger.info("Found Hue bridge at {}", host);
                     // TODO: make sure not to overwrite this property
-                    setPluginConfigurationProperty(getId(), "bridge.host", host);
+                    setPluginConfigurationProperty(getContext(), "bridge.host", host);
                 }
             } catch (URISyntaxException e) {
                 logger.debug("Ignoring invalid Philips Hue bridge data: {}", adv.getAdvertisement().getRawData());
@@ -181,7 +179,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public void onLightState(String deviceId, LightState state) {
-        HueLight light = (HueLight)getDevice(deviceId);
+        HueLight light = (HueLight)getDevice(DeviceContext.create(getContext(), deviceId));
         if (light != null) {
             light.onLightState(state);
         } else {
@@ -191,7 +189,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public void onLightStateFailure(String deviceId, Throwable t) {
-        HueLight light = (HueLight)getDevice(deviceId);
+        HueLight light = (HueLight)getDevice(DeviceContext.create(getContext(), deviceId));
         if (light != null) {
             light.onLightStateFailure(t);
         } else {
@@ -208,7 +206,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @Override
     public void onSetVariable(String deviceId, String name, Object value) {
-        HueLight light = (HueLight)getDevice(deviceId);
+        HueLight light = (HueLight)getDevice(DeviceContext.create(getContext(), deviceId));
         if (light != null) {
             light.onSetVariable(name, value);
         } else {
@@ -269,11 +267,11 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     public void createHueLight(Light light) {
         HueLight hlight = new HueLight(this, light.getId(), light.getModel(), light.getName(), this, light);
         publishDevice(hlight);
-        logger.debug("Added Hue light {} as {}", light.getId(), hlight.getId());
+        logger.debug("Added Hue light {} as {}", light.getId(), hlight.getContext());
     }
 
     @Override
     public boolean hasHueLight(String deviceId) {
-        return hasDevice(deviceId);
+        return hasDevice(DeviceContext.create(getContext(), deviceId));
     }
 }

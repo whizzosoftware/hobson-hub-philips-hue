@@ -8,6 +8,7 @@
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
+import com.whizzosoftware.hobson.philipshue.HuePlugin;
 import com.whizzosoftware.hobson.philipshue.api.dto.Light;
 import com.whizzosoftware.hobson.philipshue.api.dto.ErrorResponse;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetAllLightsResponse;
@@ -23,7 +24,8 @@ public class AuthorizingStateTest {
     @Test
     public void testInit() {
         AuthorizingState state = new AuthorizingState();
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
         // first attempt
@@ -40,7 +42,8 @@ public class AuthorizingStateTest {
     @Test
     public void testInitWithAuthError() {
         AuthorizingState state = new AuthorizingState();
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
         // first attempt
@@ -55,7 +58,8 @@ public class AuthorizingStateTest {
     @Test
     public void testInitWithOtherError() {
         AuthorizingState state = new AuthorizingState();
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
         // first attempt
@@ -65,13 +69,14 @@ public class AuthorizingStateTest {
 
         // response with unauthorized user
         assertTrue(state.onBridgeResponse(ctx, new ErrorResponse(ErrorResponse.LINK_BUTTON_NOT_PRESSED, null, null)) instanceof FailedState);
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testInitWithUnexpectedResponse() {
         AuthorizingState state = new AuthorizingState();
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
         // first attempt
@@ -81,12 +86,13 @@ public class AuthorizingStateTest {
 
         // response with unauthorized user
         assertTrue(state.onBridgeResponse(ctx, new GetLightAttributeAndStateResponse("", null)) instanceof FailedState);
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testInitWithTimeouts() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
@@ -126,28 +132,31 @@ public class AuthorizingStateTest {
         assertTrue(state.onRefresh(ctx, now + state.getTimeout() + state.getTimeout() + state.getTimeout() + 100) instanceof FailedState);
         assertEquals(3, ctx.getGetAllLightRequestsCount());
         assertNotNull(ctx.getPluginStatus());
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testOnBridgeHostUpdate() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
     }
 
     @Test
     public void testOnBridgeRequestFailure() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertNull(ctx.getPluginStatus());
         assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof FailedState);
-        assertEquals(PluginStatus.Status.FAILED, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.FAILED, ctx.getPluginStatus().getCode());
     }
 
     @Test
     public void testOnSetVariable() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertTrue(state.onSetVariable(ctx, "", "", "") instanceof AuthorizingState);
     }

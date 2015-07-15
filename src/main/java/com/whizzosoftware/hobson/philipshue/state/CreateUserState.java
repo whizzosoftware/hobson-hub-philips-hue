@@ -28,7 +28,7 @@ public class CreateUserState extends AbstractTimeoutState {
 
         if (state instanceof FailedState) {
             logger.warn("Timeout waiting for Hue bridge to respond to CreateUser request");
-            ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Timeout waiting for response from Hue bridge. See log for details."));
+            ctx.setPluginStatus(PluginStatus.failed("Timeout waiting for response from Hue bridge. See log for details."));
         }
 
         return state;
@@ -47,20 +47,20 @@ public class CreateUserState extends AbstractTimeoutState {
             ErrorResponse er = (ErrorResponse)response;
             if (er.getType() == ErrorResponse.LINK_BUTTON_NOT_PRESSED) {
                 logger.debug("Plugin not authorized to talk to Hue bridge; waiting for user to press bridge button");
-                context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Hobson is not authorized to talk to the Hue bridge. Please press the button on your bridge within the next 30 seconds."));
+                context.setPluginStatus(PluginStatus.failed("Hobson is not authorized to talk to the Hue bridge. Please press the button on your bridge within the next 30 seconds."));
                 return this;
             }
         }
 
         logger.warn("Received unexpected response to CreateUser request: {}", response);
-        context.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Unable to create Hue bridge user. See log for details."));
+        context.setPluginStatus(PluginStatus.failed("Unable to create Hue bridge user. See log for details."));
         return new FailedState();
     }
 
     @Override
     public State onBridgeRequestFailure(StateContext ctx, Object requestContext, Throwable t) {
         logger.error("Error response received from Hue bridge while creating user", t);
-        ctx.setPluginStatus(new PluginStatus(PluginStatus.Status.FAILED, "Received error response from Hue bridge. See log for details."));
+        ctx.setPluginStatus(PluginStatus.failed("Received error response from Hue bridge. See log for details."));
         return new FailedState();
     }
 

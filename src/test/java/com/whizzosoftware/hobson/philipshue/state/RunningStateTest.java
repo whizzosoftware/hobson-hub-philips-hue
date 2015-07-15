@@ -8,6 +8,7 @@
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
+import com.whizzosoftware.hobson.philipshue.HuePlugin;
 import com.whizzosoftware.hobson.philipshue.api.dto.Light;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetAllLightsResponse;
 import org.junit.Test;
@@ -20,20 +21,22 @@ import static org.junit.Assert.*;
 public class RunningStateTest {
     @Test
     public void testOnRefresh() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertNull(ctx.getPluginStatus());
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
         state.onRefresh(ctx);
         assertNotNull(ctx.getPluginStatus());
-        assertEquals(PluginStatus.Status.RUNNING, ctx.getPluginStatus().getStatus());
+        assertEquals(PluginStatus.Code.RUNNING, ctx.getPluginStatus().getCode());
         assertEquals(1, ctx.getGetAllLightRequestsCount());
     }
 
     @Test
     public void testOnBridgeResponseWithLights() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
@@ -55,21 +58,24 @@ public class RunningStateTest {
 
     @Test
     public void testOnBridgeHostUpdate() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
     }
 
     @Test
     public void testOnBridgeReuqestFailure() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof RunningState);
     }
 
     @Test
     public void testOnSetVariable() {
-        MockStateContext ctx = new MockStateContext("host");
+        HuePlugin plugin = new HuePlugin("plugin");
+        MockStateContext ctx = new MockStateContext(plugin, "host");
         ctx.createHueLight(new Light("1", "light1", "model1", null));
         assertEquals(0, ctx.getSetLightStateRequests().size());
 

@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue;
 
+import com.whizzosoftware.hobson.api.device.DeviceContext;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
 import com.whizzosoftware.hobson.api.device.MockDeviceManager;
 import com.whizzosoftware.hobson.api.hub.HubContext;
@@ -64,12 +65,12 @@ public class HuePluginTest {
         }
 
         // verify that the initial "on" variable is set correctly
-        assertEquals(true, vm.getPublishedDeviceVariables("pluginId", "1").get("on").getValue());
-        assertEquals(false, vm.getPublishedDeviceVariables("pluginId", "2").get("on").getValue());
-        assertEquals(57, vm.getPublishedDeviceVariables("pluginId", "1").get("level").getValue());
-        assertEquals(0, vm.getPublishedDeviceVariables("pluginId", "2").get("level").getValue());
-        assertEquals("rgb(255,147,40)", vm.getPublishedDeviceVariables("pluginId", "1").get("color").getValue());
-        assertEquals("rgb(91,0,255)", vm.getPublishedDeviceVariables("pluginId", "2").get("color").getValue());
+        assertEquals(true, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "1")).get("on").getValue());
+        assertEquals(false, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "2")).get("on").getValue());
+        assertEquals(57, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "1")).get("level").getValue());
+        assertEquals(0, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "2")).get("level").getValue());
+        assertEquals("rgb(255,147,40)", vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "1")).get("color").getValue());
+        assertEquals("rgb(91,0,255)", vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "2")).get("color").getValue());
 
         // send a HTTP request failure
         plugin.onHttpRequestFailure(new Exception(), new GetAllLightsRequest());

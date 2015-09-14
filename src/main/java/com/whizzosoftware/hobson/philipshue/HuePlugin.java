@@ -65,7 +65,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
             if (bridgeHost != null) {
                 setBridgeHost(bridgeHost);
             } else {
-                requestDeviceAdvertisementSnapshot("ssdp");
+                requestDeviceAdvertisementSnapshot(SSDPPacket.PROTOCOL_ID);
             }
         } catch (HueException e) {
             logger.error("Error starting Hue plugin", e);

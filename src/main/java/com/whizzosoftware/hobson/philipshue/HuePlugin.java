@@ -60,7 +60,13 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     @Override
     public void onStartup(PropertyContainer config) {
         try {
-            setBridgeHost((String)config.getPropertyValue(PROP_BRIDGE_HOST));
+            String bridgeHost = (String)config.getPropertyValue(PROP_BRIDGE_HOST);
+            // if the bridge host is already configured, use it; otherwise, look for a device advertisement
+            if (bridgeHost != null) {
+                setBridgeHost(bridgeHost);
+            } else {
+                requestDeviceAdvertisementSnapshot("ssdp");
+            }
         } catch (HueException e) {
             logger.error("Error starting Hue plugin", e);
             setPluginStatus(PluginStatus.failed("Error starting Hue plugin. See the log for details."));

@@ -81,7 +81,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     @Override
     protected TypedProperty[] createSupportedProperties() {
         return new TypedProperty[] {
-            new TypedProperty(PROP_BRIDGE_HOST, "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge", TypedProperty.Type.STRING)
+            new TypedProperty(PROP_BRIDGE_HOST, "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge. This should be detected automatically but you can enter it manually here if necessary.", TypedProperty.Type.STRING)
         };
     }
 

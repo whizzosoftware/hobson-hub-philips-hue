@@ -138,6 +138,9 @@ public class HueLight extends AbstractHobsonDevice {
 
             long now = System.currentTimeMillis();
 
+            // set the check-in time
+            checkInDevice(state.isReachable() ? now : null);
+
             HobsonVariable var = getVariable(VariableConstants.ON);
             if (var != null) {
                 Boolean on = state.getOn();

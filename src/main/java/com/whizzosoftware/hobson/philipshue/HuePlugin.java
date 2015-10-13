@@ -14,6 +14,7 @@ import com.whizzosoftware.hobson.api.event.EventTopics;
 import com.whizzosoftware.hobson.api.event.HobsonEvent;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.api.plugin.http.AbstractHttpClientPlugin;
+import com.whizzosoftware.hobson.api.property.PropertyConstraintType;
 import com.whizzosoftware.hobson.api.property.PropertyContainer;
 import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.philipshue.api.HttpContext;
@@ -81,7 +82,9 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     @Override
     protected TypedProperty[] createSupportedProperties() {
         return new TypedProperty[] {
-            new TypedProperty(PROP_BRIDGE_HOST, "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge. This should be detected automatically but you can enter it manually here if necessary.", TypedProperty.Type.STRING)
+            new TypedProperty.Builder(PROP_BRIDGE_HOST, "Hue Bridge", "The hostname or IP address of the Philips Hue Bridge. This should be detected automatically but you can enter it manually here if necessary.", TypedProperty.Type.STRING)
+                .constraint(PropertyConstraintType.required, true)
+                .build()
         };
     }
 

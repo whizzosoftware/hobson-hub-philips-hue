@@ -5,7 +5,7 @@
     <artifactId>hobson-hub-philips-hue</artifactId>
     <packaging>bundle</packaging>
     <version>0.3.1-SNAPSHOT</version>
-    <name>Philips Hue Plugin</name>
+    <name>Philips Hue</name>
     <description>Provides the ability to control the Philips Hue lighting system.</description>
     <dependencies>
         <dependency>
@@ -41,13 +41,13 @@
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
             <artifactId>hobson-hub-api</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
+            <version>0.6.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
-            <artifactId>hobson-hub-ssdp-scanner</artifactId>
-            <version>0.3.0</version>
+            <artifactId>hobson-hub-ssdp</artifactId>
+            <version>0.6.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -77,7 +77,7 @@
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
             <artifactId>hobson-hub-api-mock</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
+            <version>0.6.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -125,7 +125,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>org.osgi.framework,org.osgi.service.cm,org.apache.felix.dm,org.osgi.service.event,org.slf4j,org.json.*,com.whizzosoftware.hobson.api.*;version="[0.5.0,0.6)",com.whizzosoftware.hobson.ssdp;resolution:=optional</Import-Package>
+                        <Import-Package>org.osgi.framework,org.osgi.service.cm,org.apache.felix.dm,org.osgi.service.event,org.slf4j,org.json.*,com.whizzosoftware.hobson.api.*;version="[0.6.0,0.7)",com.whizzosoftware.hobson.ssdp;resolution:=optional</Import-Package>
                         <Bundle-Activator>com.whizzosoftware.hobson.api.osgi.activator.HobsonBundleActivator</Bundle-Activator>
                         <Provide-Capability>hobson.plugin=com.whizzosoftware.hobson.philipshue.HuePlugin</Provide-Capability>
                         <Bundle-Category>hobson-plugin</Bundle-Category>

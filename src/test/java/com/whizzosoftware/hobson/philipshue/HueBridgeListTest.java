@@ -27,7 +27,7 @@ public class HueBridgeListTest {
                 "NTS: ssdp:alive\r\n" +
                 "NT: uuid:2f402f80-da50-11e1-9b23-00178814bbdc\r\n" +
                 "USN: uuid:2f402f80-da50-11e1-9b23-00178814bbdc\r\n";
-        DeviceAdvertisement entity = new DeviceAdvertisement.Builder(null, SSDPPacket.PROTOCOL_ID).rawData(rawData).object(new SSDPPacket(rawData)).build();
+        DeviceAdvertisement entity = new DeviceAdvertisement.Builder(null, SSDPPacket.PROTOCOL_ID).rawData(rawData).object(SSDPPacket.createWithData(rawData)).build();
         assertEquals(0, repo.getDiscoveredBridgeLocations().size());
         repo.addDeviceAdvertisement(entity);
         Collection<String> locs = repo.getDiscoveredBridgeLocations();
@@ -96,7 +96,7 @@ public class HueBridgeListTest {
                 "NTS: ssdp:alive\r\n" +
                 "NT: uuid:2f402f80-da50-11e1-9b23-00178814bbdc\r\n" +
                 "USN: uuid:2f402f80-da50-11e1-9b23-00178814bbdc\r\n";
-        DeviceAdvertisement entity = new DeviceAdvertisement.Builder(null, SSDPPacket.PROTOCOL_ID).rawData(rawData).object(new SSDPPacket(rawData)).build();
+        DeviceAdvertisement entity = new DeviceAdvertisement.Builder(null, SSDPPacket.PROTOCOL_ID).rawData(rawData).object(SSDPPacket.createWithData(rawData)).build();
         assertEquals(0, repo.getDiscoveredBridgeLocations().size());
         repo.addDeviceAdvertisement(entity);
         Collection<String> locs = repo.getDiscoveredBridgeLocations();

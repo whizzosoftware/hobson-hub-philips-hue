@@ -7,11 +7,11 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue;
 
-import com.whizzosoftware.hobson.api.device.DeviceContext;
 import com.whizzosoftware.hobson.api.device.HobsonDevice;
 import com.whizzosoftware.hobson.api.device.MockDeviceManager;
 import com.whizzosoftware.hobson.api.hub.HubContext;
 import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.MockVariableManager;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetAllLightsRequest;
@@ -56,21 +56,29 @@ public class HuePluginTest {
             ((HueLight)device).onStartup(null);
         }
 
-        // check that variables were published for both devices
-        assertEquals(2, vm.getPublishedDeviceVariables().size());
+        Collection<HobsonVariable> vars = vm.getPublishedDeviceVariables();
 
-        // check that each device published 3 variables
-        for (String key : vm.getPublishedDeviceVariables().keySet()) {
-            assertEquals(3, vm.getPublishedDeviceVariables().get(key).size());
-        }
+        // check that variables were published for both devices
+        assertEquals(6, vars.size());
 
         // verify that the initial "on" variable is set correctly
-        assertEquals(true, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "1")).get("on").getValue());
-        assertEquals(false, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "2")).get("on").getValue());
-        assertEquals(57, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "1")).get("level").getValue());
-        assertEquals(0, vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "2")).get("level").getValue());
-        assertEquals("rgb(255,147,40)", vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "1")).get("color").getValue());
-        assertEquals("rgb(91,0,255)", vm.getPublishedDeviceVariables(DeviceContext.createLocal("pluginId", "2")).get("color").getValue());
+        for (HobsonVariable hv : vars) {
+            if (hv.getContext().getDeviceId().equals("1") && hv.getContext().getName().equals("on")) {
+                assertEquals(true, hv.getValue());
+            } else if (hv.getContext().getDeviceId().equals("2") && hv.getContext().getName().equals("on")) {
+                assertEquals(false, hv.getValue());
+            } else if (hv.getContext().getDeviceId().equals("1") && hv.getContext().getName().equals("level")) {
+                assertEquals(57, hv.getValue());
+            } else if (hv.getContext().getDeviceId().equals("2") && hv.getContext().getName().equals("level")) {
+                assertEquals(0, hv.getValue());
+            } else if (hv.getContext().getDeviceId().equals("1") && hv.getContext().getName().equals("color")) {
+                assertEquals("rgb(255,147,40)", hv.getValue());
+            } else if (hv.getContext().getDeviceId().equals("2") && hv.getContext().getName().equals("color")) {
+                assertEquals("rgb(91,0,255)", hv.getValue());
+            } else {
+                fail("Unknown variable encountered");
+            }
+        }
 
         // send a HTTP request failure
         plugin.onHttpRequestFailure(new Exception(), new GetAllLightsRequest());

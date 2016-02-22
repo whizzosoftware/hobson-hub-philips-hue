@@ -4,32 +4,20 @@
     <groupId>com.whizzosoftware.hobson.hub</groupId>
     <artifactId>hobson-hub-philips-hue</artifactId>
     <packaging>bundle</packaging>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
     <name>Philips Hue</name>
     <description>Provides the ability to control the Philips Hue lighting system.</description>
     <dependencies>
         <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>1.4.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>1.4.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.dependencymanager</artifactId>
-            <version>3.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.6</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -41,13 +29,13 @@
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
             <artifactId>hobson-hub-api</artifactId>
-            <version>0.6.0</version>
+            <version>0.8.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
             <artifactId>hobson-hub-ssdp</artifactId>
-            <version>0.6.0</version>
+            <version>0.8.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -77,7 +65,7 @@
         <dependency>
             <groupId>com.whizzosoftware.hobson.hub</groupId>
             <artifactId>hobson-hub-api-mock</artifactId>
-            <version>0.6.0</version>
+            <version>0.8.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -125,7 +113,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>org.osgi.framework,org.osgi.service.cm,org.apache.felix.dm,org.osgi.service.event,org.slf4j,org.json.*,com.whizzosoftware.hobson.api.*;version="[0.6.0,0.7)",com.whizzosoftware.hobson.ssdp;resolution:=optional</Import-Package>
+                        <Import-Package>org.osgi.framework,org.osgi.service.cm,org.apache.felix.dm,org.osgi.service.event,org.slf4j,org.json.*,com.whizzosoftware.hobson.api.*;version="[0.8.0,0.9)",com.whizzosoftware.hobson.ssdp;resolution:=optional</Import-Package>
                         <Bundle-Activator>com.whizzosoftware.hobson.api.osgi.activator.HobsonBundleActivator</Bundle-Activator>
                         <Provide-Capability>hobson.plugin=com.whizzosoftware.hobson.philipshue.HuePlugin</Provide-Capability>
                         <Bundle-Category>hobson-plugin</Bundle-Category>

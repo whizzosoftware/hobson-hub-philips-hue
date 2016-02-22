@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.state;
 
+import com.whizzosoftware.hobson.api.device.MockDeviceManager;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.philipshue.HuePlugin;
 import com.whizzosoftware.hobson.philipshue.api.dto.Light;
@@ -35,7 +36,9 @@ public class RunningStateTest {
 
     @Test
     public void testOnBridgeResponseWithLights() {
+        MockDeviceManager dm = new MockDeviceManager();
         HuePlugin plugin = new HuePlugin("plugin");
+        plugin.setDeviceManager(dm);
         MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertEquals(0, ctx.getGetAllLightRequestsCount());
@@ -74,7 +77,9 @@ public class RunningStateTest {
 
     @Test
     public void testOnSetVariable() {
+        MockDeviceManager dm = new MockDeviceManager();
         HuePlugin plugin = new HuePlugin("plugin");
+        plugin.setDeviceManager(dm);
         MockStateContext ctx = new MockStateContext(plugin, "host");
         ctx.createHueLight(new Light("1", "light1", "model1", null));
         assertEquals(0, ctx.getSetLightStateRequests().size());

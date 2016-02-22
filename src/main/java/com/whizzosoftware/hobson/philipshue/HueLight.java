@@ -13,6 +13,7 @@ import com.whizzosoftware.hobson.api.property.PropertyContainer;
 import com.whizzosoftware.hobson.api.property.TypedProperty;
 import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
+import com.whizzosoftware.hobson.api.variable.VariableContext;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
 import com.whizzosoftware.hobson.philipshue.api.ColorConversion;
 import com.whizzosoftware.hobson.philipshue.api.dto.Light;
@@ -68,9 +69,10 @@ public class HueLight extends AbstractHobsonDevice {
 
     @Override
     public void onStartup(PropertyContainer config) {
-        publishVariable(VariableConstants.COLOR, initialColor, HobsonVariable.Mask.READ_WRITE);
-        publishVariable(VariableConstants.LEVEL, initialLevel, HobsonVariable.Mask.READ_WRITE);
-        publishVariable(VariableConstants.ON, initialOnValue, HobsonVariable.Mask.READ_WRITE);
+        long now = System.currentTimeMillis();
+        publishVariable(VariableConstants.COLOR, initialColor, HobsonVariable.Mask.READ_WRITE, initialColor != null ? now : null);
+        publishVariable(VariableConstants.LEVEL, initialLevel, HobsonVariable.Mask.READ_WRITE, initialLevel != null ? now : null);
+        publishVariable(VariableConstants.ON, initialOnValue, HobsonVariable.Mask.READ_WRITE, initialOnValue != null ? now : null);
     }
 
     @Override
@@ -139,7 +141,7 @@ public class HueLight extends AbstractHobsonDevice {
             long now = System.currentTimeMillis();
 
             // set the check-in time
-            checkInDevice(state.isReachable() ? now : null);
+            setDeviceAvailability(state.isReachable(), state.isReachable() ? now : null);
 
             HobsonVariable var = getVariable(VariableConstants.ON);
             if (var != null) {
@@ -150,7 +152,7 @@ public class HueLight extends AbstractHobsonDevice {
                 if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
                     logger.debug("Detected change in on status for {}: {} (old value was {})", getContext(), state.getOn(), var.getValue());
                     updates = new ArrayList<>();
-                    updates.add(new VariableUpdate(getContext(), VariableConstants.ON, on, now));
+                    updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.ON), on, now));
                 }
             }
 
@@ -165,7 +167,7 @@ public class HueLight extends AbstractHobsonDevice {
                     if (updates == null) {
                         updates = new ArrayList<>();
                     }
-                    updates.add(new VariableUpdate(getContext(), VariableConstants.COLOR, color, now));
+                    updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.COLOR), color, now));
                 }
             }
 
@@ -180,7 +182,7 @@ public class HueLight extends AbstractHobsonDevice {
                     if (updates == null) {
                         updates = new ArrayList<>();
                     }
-                    updates.add(new VariableUpdate(getContext(), VariableConstants.LEVEL, level, now));
+                    updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.LEVEL), level, now));
                 }
             }
 
@@ -196,9 +198,9 @@ public class HueLight extends AbstractHobsonDevice {
         // set all variables to null to indicate that the current state of this light is now unknown
         long now = System.currentTimeMillis();
         List<VariableUpdate> updates = new ArrayList<>();
-        updates.add(new VariableUpdate(getContext(), VariableConstants.ON, null, now));
-        updates.add(new VariableUpdate(getContext(), VariableConstants.COLOR, null, now));
-        updates.add(new VariableUpdate(getContext(), VariableConstants.LEVEL, null, now));
+        updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.ON), null, now));
+        updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.COLOR), null, now));
+        updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.LEVEL), null, now));
         fireVariableUpdateNotifications(updates);
     }
 

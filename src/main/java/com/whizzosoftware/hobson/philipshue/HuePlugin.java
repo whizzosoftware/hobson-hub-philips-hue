@@ -280,7 +280,7 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     @Override
     public void createHueLight(Light light) {
         HueLight hlight = new HueLight(this, light.getId(), light.getModel(), light.getName(), this, light);
-        hlight.checkInDevice(null);
+        hlight.setDeviceAvailability(false, null);
         publishDevice(hlight);
         logger.debug("Added Hue light {} as {}", light.getId(), hlight.getContext());
     }

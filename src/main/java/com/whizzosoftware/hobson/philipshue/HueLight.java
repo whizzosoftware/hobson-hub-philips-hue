@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue;
 
+import com.whizzosoftware.hobson.api.color.Color;
 import com.whizzosoftware.hobson.api.device.AbstractHobsonDevice;
 import com.whizzosoftware.hobson.api.device.DeviceType;
 import com.whizzosoftware.hobson.api.property.PropertyContainer;
@@ -15,7 +16,6 @@ import com.whizzosoftware.hobson.api.variable.HobsonVariable;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
 import com.whizzosoftware.hobson.api.variable.VariableContext;
 import com.whizzosoftware.hobson.api.variable.VariableUpdate;
-import com.whizzosoftware.hobson.philipshue.api.ColorConversion;
 import com.whizzosoftware.hobson.philipshue.api.dto.Light;
 import com.whizzosoftware.hobson.philipshue.api.dto.LightState;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetLightAttributeAndStateRequest;
@@ -38,7 +38,6 @@ public class HueLight extends AbstractHobsonDevice {
     private final String model;
     private StateContext context;
     private Boolean initialOnValue;
-    private Integer initialLevel;
     private String initialColor;
 
     /**
@@ -62,7 +61,6 @@ public class HueLight extends AbstractHobsonDevice {
 
         if (light != null && light.getState() != null) {
             initialOnValue = light.getState().getOn();
-            initialLevel = convertBrightnessToLevel(light.getState().getBrightness());
             initialColor = convertLightStateToColor(light.getState());
         }
     }
@@ -71,7 +69,6 @@ public class HueLight extends AbstractHobsonDevice {
     public void onStartup(PropertyContainer config) {
         long now = System.currentTimeMillis();
         publishVariable(VariableConstants.COLOR, initialColor, HobsonVariable.Mask.READ_WRITE, initialColor != null ? now : null);
-        publishVariable(VariableConstants.LEVEL, initialLevel, HobsonVariable.Mask.READ_WRITE, initialLevel != null ? now : null);
         publishVariable(VariableConstants.ON, initialOnValue, HobsonVariable.Mask.READ_WRITE, initialOnValue != null ? now : null);
     }
 
@@ -99,10 +96,7 @@ public class HueLight extends AbstractHobsonDevice {
         logger.debug("Setting variable for device {} ({}={})", getContext(), variableName, value);
 
         Boolean on = null;
-        Integer brightness = null;
-        Integer red = null;
-        Integer green = null;
-        Integer blue = null;
+        Color color = null;
 
         if (VariableConstants.ON.equals(variableName)) {
             if (value instanceof String) {
@@ -112,29 +106,22 @@ public class HueLight extends AbstractHobsonDevice {
             }
         } else if (VariableConstants.COLOR.equals(variableName)) {
             logger.debug("Setting variable for device {} ({}={})", getContext(), variableName, value);
-            ColorConversion.Color color = ColorConversion.createColorFromRGBString((String)value);
-            if (color != null) {
-                red = color.r;
-                green = color.g;
-                blue = color.b;
-            }
-        } else if (VariableConstants.LEVEL.equals(variableName)) {
-            brightness = convertLevelToBrightness((Integer)value);
+            color = new Color((String)value);
         }
 
-        if (on != null || brightness != null || red != null) {
-            LightState state = new LightState(on, brightness, red, green, blue, null, model, null);
+        if (on != null || color != null) {
+            LightState state = new LightState(on, color, null, null);
             logger.debug("New state for device {} is {}", getContext(), state);
             context.sendSetLightStateRequest(new SetLightStateRequest(getContext().getDeviceId(), state));
         }
     }
 
-    public void refresh() {
+    void refresh() {
         logger.debug("Refreshing device {}", getContext());
         context.sendGetLightAttributeAndStateRequest(new GetLightAttributeAndStateRequest(getContext().getDeviceId()));
     }
 
-    public void onLightState(LightState state) {
+    void onLightState(LightState state) {
         if (state != null) {
             List<VariableUpdate> updates = null;
 
@@ -171,28 +158,13 @@ public class HueLight extends AbstractHobsonDevice {
                 }
             }
 
-            var = getVariable(VariableConstants.LEVEL);
-            if (var != null) {
-                Integer level = convertBrightnessToLevel(state.getBrightness());
-                if (!state.isReachable()) {
-                    level = null;
-                }
-                if ((var.getValue() == null && level != null) || (level != null && !var.getValue().equals(level))) {
-                    logger.debug("Detected change in level status for {}: {} (old value was {})", getContext(), level, var.getValue());
-                    if (updates == null) {
-                        updates = new ArrayList<>();
-                    }
-                    updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.LEVEL), level, now));
-                }
-            }
-
             if (updates != null) {
                 fireVariableUpdateNotifications(updates);
             }
         }
     }
 
-    public void onLightStateFailure(Throwable t) {
+    void onLightStateFailure(Throwable t) {
         logger.debug("Received failure for light " + getContext(), t);
 
         // set all variables to null to indicate that the current state of this light is now unknown
@@ -200,11 +172,10 @@ public class HueLight extends AbstractHobsonDevice {
         List<VariableUpdate> updates = new ArrayList<>();
         updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.ON), null, now));
         updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.COLOR), null, now));
-        updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.LEVEL), null, now));
         fireVariableUpdateNotifications(updates);
     }
 
-    protected Integer convertBrightnessToLevel(Integer brightness) {
+    Integer convertBrightnessToLevel(Integer brightness) {
         if (brightness != null) {
             if (brightness == 0) {
                 return 0;
@@ -222,7 +193,7 @@ public class HueLight extends AbstractHobsonDevice {
         }
     }
       
-    protected Integer convertLevelToBrightness(Integer level) {
+    Integer convertLevelToBrightness(Integer level) {
         if (level != null) {
             if (level == 0) {
                 return 0;
@@ -236,10 +207,11 @@ public class HueLight extends AbstractHobsonDevice {
         }
     } 
 
-    protected String convertLightStateToColor(LightState state) {
-        if (state != null && state.getX() != null && state.getY() != null) {
-            ColorConversion.Color c = ColorConversion.colorFromXY(new ColorConversion.PointF(state.getX(), state.getY()), model);
-            return "rgb(" + c.r + "," + c.g + "," + c.b + ")";
+    String convertLightStateToColor(LightState state) {
+        if (state != null && state.hasColor()) {
+            return new Color((int)(Math.round(state.getHue() / 182.0416666667)), (int)(state.getSaturation() / 2.54), (int)(state.getBrightness() / 2.54)).toString();
+        } else if (state != null && state.hasColorTemperature()) {
+            return new Color(1000000 / state.getColorTemperature(), (int)(state.getBrightness() / 2.54)).toString();
         } else {
             return null;
         }

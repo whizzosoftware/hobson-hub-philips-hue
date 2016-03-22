@@ -43,10 +43,10 @@ public class HueLightTest {
         plugin.setVariableManager(vm);
         MockStateContext context = new MockStateContext(plugin, "host");
 
-        LightState newState = new LightState(true, null, 255, 0, 0, null, null, true);
+        LightState newState = new LightState(true, 65535, 254, 254, null, LightState.MODE_HS, null, null, true);
 
         // start with one light in a known state
-        context.createHueLight(new Light("1", "Hue Light 1", "model", new LightState(true, null, 255, 0, 0, null, null, true)));
+        context.createHueLight(new Light("1", "Hue Light 1", "model", new LightState(true, null, null, 255, null, null, null, null, true)));
 
         // check that there is no variable updates prior to the refresh() call
         HueLight light = new HueLight(plugin, "1", null, "Hue Light 1", context);
@@ -67,13 +67,13 @@ public class HueLightTest {
         assertEquals(true, v.getValue());
         v = vm.getVariableUpdates().get(1);
         assertEquals(VariableConstants.COLOR, v.getName());
-        assertEquals("rgb(255,0,0)", v.getValue());
+        assertEquals("hsb(360,100,100)", v.getValue());
 
         vm.clearVariableUpdates();
 
         // set the device variable and check that there are no updates detected after refresh()
         MutableHobsonVariable mdv = (MutableHobsonVariable)vm.getVariable(VariableContext.create(DeviceContext.create(plugin.getContext(), "1"), VariableConstants.COLOR));
-        mdv.setValue("rgb(255,0,0)");
+        mdv.setValue("hsb(360,100,100)");
         mdv = (MutableHobsonVariable)vm.getVariable(VariableContext.create(DeviceContext.create(plugin.getContext(), "1"), VariableConstants.ON));
         mdv.setValue(true);
         light.onLightState(newState);
@@ -84,12 +84,12 @@ public class HueLightTest {
         assertEquals(0, vm.getVariableUpdates().size());
 
         // set the light state to new color value and verify one update detected
-        light.onLightState(new LightState(true, null, 0, 255, 0, null, null, true));
+        light.onLightState(new LightState(true, 30000, 254, 254, null, LightState.MODE_HS, null, null, true));
         light.refresh();
         assertEquals(1, vm.getVariableUpdates().size());
         v = vm.getVariableUpdates().get(0);
         assertEquals(VariableConstants.COLOR, v.getName());
-        assertEquals("rgb(0,255,0)", v.getValue());
+        assertEquals("hsb(165,100,100)", v.getValue());
     }
 
     @Test
@@ -101,7 +101,7 @@ public class HueLightTest {
         driver.setVariableManager(vm);
         HuePlugin plugin = new HuePlugin("plugin");
         MockStateContext context = new MockStateContext(plugin, "host");
-        LightState state = new LightState(true, null, null, null, null, null, null, true);
+        LightState state = new LightState(true, null, null, null, null, null, null, null, true);
 
         // check that there is no update prior to the refresh() call
         HueLight light = new HueLight(driver, "1", null, "Hue Light 1", context);
@@ -133,8 +133,8 @@ public class HueLightTest {
         plugin.setDeviceManager(dm);
         HueLight light = new HueLight(plugin, null, null, null, null);
         assertNull(light.convertLightStateToColor(null));
-        assertNull(light.convertLightStateToColor(new LightState(null, null, null, null, null, null, null, null)));
-        assertEquals("rgb(255,0,0)", light.convertLightStateToColor(new LightState(null, null, 255, 0, 0, null, null, null)));
+        assertNull(light.convertLightStateToColor(new LightState(null, null, null, null, null, null, null, null, null)));
+        assertEquals("hsb(360,100,100)", light.convertLightStateToColor(new LightState(null, 65535, 254, 254, null, LightState.MODE_HS, null, null, null)));
     }
 
     @Test
@@ -206,24 +206,11 @@ public class HueLightTest {
         MockStateContext context = new MockStateContext(plugin, "host");
         HueLight light = new HueLight(plugin, "id", "model", "name", context);
         assertEquals(0, context.getSetLightStateRequests().size());
-        light.onSetVariable("color", "rgb(255,255,255)");
+        light.onSetVariable("color", "hsb(360,100,100)");
         assertEquals(1, context.getSetLightStateRequests().size());
         LightState state = context.getSetLightStateRequests().get(0).getState();
-        assertEquals(0.31, state.getX(), 0.1);
-        assertEquals(0.32, state.getY(), 0.1);
-    }
-
-    @Test
-    public void testOnSetVariableLevel() {
-        MockDeviceManager dm = new MockDeviceManager();
-        HuePlugin plugin = new HuePlugin("plugin");
-        plugin.setDeviceManager(dm);
-        MockStateContext context = new MockStateContext(plugin, "host");
-        HueLight light = new HueLight(plugin, "id", "model", "name", context);
-        assertEquals(0, context.getSetLightStateRequests().size());
-        light.onSetVariable("level", 50);
-        assertEquals(1, context.getSetLightStateRequests().size());
-        LightState state = context.getSetLightStateRequests().get(0).getState();
-        assertEquals(127, (long)state.getBrightness());
+        assertEquals(65535, (int)state.getHue());
+        assertEquals(254, (int)state.getSaturation());
+        assertEquals(254, (int)state.getBrightness());
     }
 }

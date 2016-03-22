@@ -41,11 +41,11 @@ public class HuePluginTest {
 
         // should be in authorizing state now -- send a valid response
         assertTrue(plugin.getState() instanceof AuthorizingState);
-        plugin.onHttpResponse(200, null, "{\"1\":{\"state\":{\"on\":true,\"bri\":144,\"hue\":13088,\"sat\":212,\"xy\":[0.5128,0.4147],\"ct\":467,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"xy\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 1\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}},\"2\":{\"state\":{\"on\":false,\"bri\":0,\"hue\":0,\"sat\":0,\"xy\":[0,0],\"ct\":0,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"hs\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 2\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}}}", new GetAllLightsRequest());
+        plugin.onHttpResponse(200, null, "{\"1\":{\"state\":{\"on\":true,\"bri\":144,\"hue\":13088,\"sat\":212,\"xy\":[0.5128,0.4147],\"ct\":467,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"hs\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 1\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}},\"2\":{\"state\":{\"on\":false,\"bri\":0,\"hue\":0,\"sat\":0,\"xy\":[0,0],\"ct\":0,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"hs\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 2\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}}}", new GetAllLightsRequest());
 
         // should now be in running state -- send another valid response to load devices
         assertTrue(plugin.getState() instanceof RunningState);
-        plugin.onHttpResponse(200, null, "{\"1\":{\"state\":{\"on\":true,\"bri\":144,\"hue\":13088,\"sat\":212,\"xy\":[0.5128,0.4147],\"ct\":467,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"xy\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 1\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}},\"2\":{\"state\":{\"on\":false,\"bri\":0,\"hue\":0,\"sat\":0,\"xy\":[0,0],\"ct\":0,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"hs\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 2\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}}}", new GetAllLightsRequest());
+        plugin.onHttpResponse(200, null, "{\"1\":{\"state\":{\"on\":true,\"bri\":144,\"hue\":13088,\"sat\":212,\"xy\":[0.5128,0.4147],\"ct\":467,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"hs\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 1\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}},\"2\":{\"state\":{\"on\":false,\"bri\":0,\"hue\":0,\"sat\":0,\"xy\":[0,0],\"ct\":0,\"alert\":\"none\",\"effect\":\"none\",\"colormode\":\"hs\",\"reachable\":true},\"type\":\"Extended color light\",\"name\":\"Hue Lamp 2\",\"modelid\":\"LCT001\",\"swversion\":\"66009461\",\"pointsymbol\":{\"1\":\"none\",\"2\":\"none\",\"3\":\"none\",\"4\":\"none\",\"5\":\"none\",\"6\":\"none\",\"7\":\"none\",\"8\":\"none\"}}}", new GetAllLightsRequest());
 
         // check that both lights were published
         assertEquals(2, dm.getPublishedDevices().size());
@@ -59,7 +59,7 @@ public class HuePluginTest {
         Collection<HobsonVariable> vars = vm.getPublishedDeviceVariables();
 
         // check that variables were published for both devices
-        assertEquals(6, vars.size());
+        assertEquals(4, vars.size());
 
         // verify that the initial "on" variable is set correctly
         for (HobsonVariable hv : vars) {
@@ -67,14 +67,10 @@ public class HuePluginTest {
                 assertEquals(true, hv.getValue());
             } else if (hv.getContext().getDeviceId().equals("2") && hv.getContext().getName().equals("on")) {
                 assertEquals(false, hv.getValue());
-            } else if (hv.getContext().getDeviceId().equals("1") && hv.getContext().getName().equals("level")) {
-                assertEquals(57, hv.getValue());
-            } else if (hv.getContext().getDeviceId().equals("2") && hv.getContext().getName().equals("level")) {
-                assertEquals(0, hv.getValue());
             } else if (hv.getContext().getDeviceId().equals("1") && hv.getContext().getName().equals("color")) {
-                assertEquals("rgb(255,147,40)", hv.getValue());
+                assertEquals("hsb(72,83,56)", hv.getValue());
             } else if (hv.getContext().getDeviceId().equals("2") && hv.getContext().getName().equals("color")) {
-                assertEquals("rgb(91,0,255)", hv.getValue());
+                assertEquals("hsb(0,0,0)", hv.getValue());
             } else {
                 fail("Unknown variable encountered");
             }
@@ -84,7 +80,7 @@ public class HuePluginTest {
         plugin.onHttpRequestFailure(new Exception(), new GetAllLightsRequest());
 
         // verify that the "on" variables are now null
-        assertEquals(6, vm.getVariableUpdates().size());
+        assertEquals(4, vm.getVariableUpdates().size());
 
         for (VariableUpdate vu : vm.getVariableUpdates()) {
             assertTrue(vu.getDeviceId().equals("1") || vu.getDeviceId().equals("2"));

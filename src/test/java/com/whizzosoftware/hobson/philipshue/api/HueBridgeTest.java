@@ -78,7 +78,7 @@ public class HueBridgeTest {
     @Test
     public void testSetLightStateRequestSuccess() throws HueException {
         HueBridge bridge = new HueBridge("host", "device", "thedudeabides");
-        SetLightStateRequest request = new SetLightStateRequest("light1", new LightState(null, null, null, null, null, null, null, null));
+        SetLightStateRequest request = new SetLightStateRequest("light1", new LightState(null, null, null, null, null, null, null, null, null));
         ByteArrayInputStream is = new ByteArrayInputStream("[{\"success\":{\"/lights/1/state/bri\":200}},{\"success\":{\"/lights/1/state/on\":true}},{\"success\":{\"/lights/1/state/hue\":50000}}]".getBytes());
         String s = "[{\"success\":{\"/lights/1/state/bri\":200}},{\"success\":{\"/lights/1/state/on\":true}},{\"success\":{\"/lights/1/state/hue\":50000}}]";
         BridgeResponse response = bridge.parseResponse(request, 200, s);
@@ -88,7 +88,7 @@ public class HueBridgeTest {
     @Test
     public void testSetLightStateRequestError() throws HueException {
         HueBridge bridge = new HueBridge("host", "device", "thedudeabides");
-        SetLightStateRequest request = new SetLightStateRequest("light1", new LightState(null, null, null, null, null, null, null, null));
+        SetLightStateRequest request = new SetLightStateRequest("light1", new LightState(null, null, null, null, null, null, null, null, null));
         ByteArrayInputStream is = new ByteArrayInputStream("[{\"error\":{\"type\":1,\"address\":\"address\",\"description\":\"description\"}}]".getBytes());
         String s = "[{\"error\":{\"type\":1,\"address\":\"address\",\"description\":\"description\"}}]";
         BridgeResponse response = bridge.parseResponse(request, 200, s);

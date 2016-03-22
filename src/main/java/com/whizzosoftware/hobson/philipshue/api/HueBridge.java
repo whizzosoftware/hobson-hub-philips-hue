@@ -128,7 +128,7 @@ public class HueBridge {
     public void sendSetLightStateRequest(HttpContext http, SetLightStateRequest request) throws HueException {
         String json = parser.createLightStateJSON(request.getState()).toString();
         String uri = bridgeBaseUrl + "/api/" + userName + "/lights/" + request.getId() + "/state";
-        logger.trace("setLightState sending request to {}: {}", uri, request);
+        logger.trace("setLightState sending request to {}: {}", uri, json);
         try {
             http.sendHttpPutRequest(new URI(uri), null, json.getBytes(), json);
         } catch (Exception e) {

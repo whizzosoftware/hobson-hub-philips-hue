@@ -15,7 +15,6 @@ import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +23,10 @@ import java.util.List;
  *
  * @author Dan Noguerol
  */
-public class HueBridgeParser {
+class HueBridgeParser {
     private static final Logger logger = LoggerFactory.getLogger(HueBridgeParser.class);
 
-    public BridgeResponse parseGetAllLightsResponse(int statusCode, String response) throws HueException {
+    BridgeResponse parseGetAllLightsResponse(int statusCode, String response) throws HueException {
         validateStatusCode(statusCode);
 
         Object o = new JSONTokener(response).nextValue();
@@ -63,7 +62,7 @@ public class HueBridgeParser {
         throw new HueException("Error getting light information; received unexpected response " + response);
     }
 
-    public BridgeResponse parseCreateUserResponse(int statusCode, String response) throws HueException {
+    BridgeResponse parseCreateUserResponse(int statusCode, String response) throws HueException {
         validateStatusCode(statusCode);
 
         Object o = new JSONTokener(response).nextValue();
@@ -82,7 +81,7 @@ public class HueBridgeParser {
         throw new HueException("Error creating user; received unexpected response " + response);
     }
 
-    public BridgeResponse parseGetLightAttributeAndStateResponse(String deviceId, int statusCode, String response) throws HueException {
+    BridgeResponse parseGetLightAttributeAndStateResponse(String deviceId, int statusCode, String response) throws HueException {
         validateStatusCode(statusCode);
 
         Object o = new JSONTokener(response).nextValue();
@@ -106,7 +105,7 @@ public class HueBridgeParser {
         throw new HueException("Error getting light information; received unexpected response " + response);
     }
 
-    public BridgeResponse parseSetLightStateResponse(int statusCode, String response) throws HueException {
+    BridgeResponse parseSetLightStateResponse(int statusCode, String response) throws HueException {
         validateStatusCode(statusCode);
 
         Object o = new JSONTokener(response).nextValue();
@@ -123,25 +122,25 @@ public class HueBridgeParser {
         throw new HueException("Error setting light state; received unexpected response " + response);
     }
 
-    protected void validateStatusCode(int statusCode) throws HueException {
+    void validateStatusCode(int statusCode) throws HueException {
         if (statusCode != 200) {
             throw new HueException("Error obtaining light state; received status code " + statusCode);
         }
     }
 
-    protected ErrorResponse createErrorResponse(JSONObject json) throws JSONException {
+    ErrorResponse createErrorResponse(JSONObject json) throws JSONException {
         HueError error = new HueError(json);
         return new ErrorResponse(error.getType(), error.getAddress(), error.getDescription());
     }
 
-    protected LightState createLightState(JSONObject obj) throws JSONException {
+    LightState createLightState(JSONObject obj) throws JSONException {
         LightState state = new LightState();
         state.setOn(obj.getBoolean("on"));
+        state.setHue(obj.getInt("hue"));
+        state.setSaturation(obj.getInt("sat"));
         state.setBrightness(obj.getInt("bri"));
-        if (obj.has("xy")) {
-            JSONArray a = obj.getJSONArray("xy");
-            state.setXY(new Float(a.getDouble(0)), new Float(a.getDouble(1)));
-        }
+        state.setColorTemperature(obj.getInt("ct"));
+        state.setColorMode(obj.getString("colormode"));
         state.setEffect(obj.getString("effect"));
         if (obj.has("modelid")) {
             state.setModel(obj.getString("modelid"));
@@ -150,19 +149,18 @@ public class HueBridgeParser {
         return state;
     }
 
-    protected JSONObject createLightStateJSON(LightState state) {
+    JSONObject createLightStateJSON(LightState state) {
         JSONObject json = new JSONObject();
         if (state.hasOn()) {
             json.put("on", state.getOn());
         }
-        if (state.hasBrightness()) {
+        if (state.hasColor()) {
+            json.put("hue", state.getHue());
+            json.put("sat", state.getSaturation());
             json.put("bri", state.getBrightness());
-        }
-        if ((!state.hasOn() || state.getOn()) && state.hasXY()) {
-            JSONArray a = new JSONArray();
-            a.put(state.getX());
-            a.put(state.getY());
-            json.put("xy", a);
+        } else if (state.hasColorTemperature()) {
+            json.put("ct", state.getColorTemperature());
+            json.put("bri", state.getBrightness());
         }
         if ((!state.hasOn() || state.getOn()) && state.hasEffect()) {
             json.put("effect", state.getEffect());

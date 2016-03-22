@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.api.dto;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * A request to set the state of a specific light on the Hue bridge.
  *
@@ -27,5 +29,9 @@ public class SetLightStateRequest {
 
     public LightState getState() {
         return state;
+    }
+
+    public String toString() {
+        return new ToStringBuilder(this).append("id", id).append("state", state).toString();
     }
 }

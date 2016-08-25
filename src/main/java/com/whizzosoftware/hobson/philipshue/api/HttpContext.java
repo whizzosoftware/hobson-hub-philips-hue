@@ -7,7 +7,11 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.api;
 
+import com.whizzosoftware.hobson.api.plugin.http.Cookie;
+import com.whizzosoftware.hobson.api.plugin.http.HttpRequest;
+
 import java.net.URI;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -16,7 +20,5 @@ import java.util.Map;
  * @author Dan Noguerol
  */
 public interface HttpContext {
-    public void sendHttpGetRequest(URI uri, Map<String,String> headers, Object context);
-    public void sendHttpPostRequest(URI uri, Map<String,String> headers, byte[] data, Object context);
-    public void sendHttpPutRequest(URI uri, Map<String,String> headers, byte[] data, Object context);
+    void sendHttpRequest(URI uri, HttpRequest.Method method, Map<String, String> headers, Collection<Cookie> cookies, byte[] body, Object context);
 }

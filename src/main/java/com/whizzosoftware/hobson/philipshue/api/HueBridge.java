@@ -7,12 +7,12 @@
  *******************************************************************************/
 package com.whizzosoftware.hobson.philipshue.api;
 
+import com.whizzosoftware.hobson.api.plugin.http.HttpRequest;
 import com.whizzosoftware.hobson.philipshue.api.dto.*;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.net.URI;
 
 /**
@@ -75,7 +75,7 @@ public class HueBridge {
         }
 
         try {
-            http.sendHttpPostRequest(new URI(uri), null, json.toString().getBytes(), null);
+            http.sendHttpRequest(new URI(uri), HttpRequest.Method.POST, null, null, json.toString().getBytes(), null);
         } catch (Exception e) {
             throw new HueException("Error sending CreateUser request", e);
         }
@@ -93,7 +93,7 @@ public class HueBridge {
         try {
             String uri = bridgeBaseUrl + "/api/" + userName + "/lights";
             logger.trace("getAllLights sending request to {}", uri);
-            http.sendHttpGetRequest(new URI(uri), null, request);
+            http.sendHttpRequest(new URI(uri), HttpRequest.Method.GET, null, null, null, request);
         } catch (Exception e) {
             throw new HueException("Error sending GetAllLights request", e);
         }
@@ -111,7 +111,7 @@ public class HueBridge {
         try {
             String uri = bridgeBaseUrl + "/api/" + userName + "/lights/" + request.getId();
             logger.trace("getLightAttributeAndState sending request to {}", uri);
-            http.sendHttpGetRequest(new URI(uri), null, request);
+            http.sendHttpRequest(new URI(uri), HttpRequest.Method.GET, null, null, null, request);
         } catch (Exception e) {
             throw new HueException("Error getting light attribute information", e);
         }
@@ -130,7 +130,7 @@ public class HueBridge {
         String uri = bridgeBaseUrl + "/api/" + userName + "/lights/" + request.getId() + "/state";
         logger.trace("setLightState sending request to {}: {}", uri, json);
         try {
-            http.sendHttpPutRequest(new URI(uri), null, json.getBytes(), json);
+            http.sendHttpRequest(new URI(uri), HttpRequest.Method.PUT, null, null, json.getBytes(), json);
         } catch (Exception e) {
             throw new HueException("Error sending SetLightState request", e);
         }

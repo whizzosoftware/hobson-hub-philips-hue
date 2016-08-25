@@ -14,6 +14,7 @@ import com.whizzosoftware.hobson.api.event.EventTopics;
 import com.whizzosoftware.hobson.api.event.HobsonEvent;
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
 import com.whizzosoftware.hobson.api.plugin.http.AbstractHttpClientPlugin;
+import com.whizzosoftware.hobson.api.plugin.http.HttpResponse;
 import com.whizzosoftware.hobson.api.property.PropertyConstraintType;
 import com.whizzosoftware.hobson.api.property.PropertyContainer;
 import com.whizzosoftware.hobson.api.property.TypedProperty;
@@ -28,6 +29,7 @@ import com.whizzosoftware.hobson.ssdp.SSDPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
@@ -157,18 +159,20 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
     // ***
 
     @Override
-    protected void onHttpResponse(int statusCode, List<Map.Entry<String, String>> headers, String response, Object context) {
+    public void onHttpResponse(HttpResponse response, Object context) {
         logger.trace("Received HTTP response");
         try {
-            BridgeResponse br = bridge.parseResponse(context, statusCode, response);
+            BridgeResponse br = bridge.parseResponse(context, response.getStatusCode(), response.getBody());
             setState(state.onBridgeResponse(this, br));
         } catch (HueException e) {
             logger.error("Error processing bridge response", e);
+        } catch (IOException e) {
+            logger.error("Error processing HTTP response", e);
         }
     }
 
     @Override
-    protected void onHttpRequestFailure(Throwable cause, Object context) {
+    public void onHttpRequestFailure(Throwable cause, Object context) {
         state.onBridgeRequestFailure(this, context, cause);
     }
 

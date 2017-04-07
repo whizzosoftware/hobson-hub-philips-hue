@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2014 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
@@ -19,7 +21,7 @@ import static org.junit.Assert.*;
 public class CreateUserStateTest {
     @Test
     public void testInit() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
@@ -31,7 +33,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testInitWithUnexpectedResponse() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
@@ -45,7 +47,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testInitWithLinkButtonErrorResponse() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
@@ -58,7 +60,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testInitWithOtherErrorResponse() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
@@ -72,7 +74,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testInitWithTimeouts() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertEquals(0, ctx.getSendCreateUserRequestCount());
@@ -112,7 +114,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testOnBridgeHostUpdate() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
@@ -120,7 +122,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testOnBridgeRequestFailure() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertNull(ctx.getPluginStatus());
@@ -130,7 +132,7 @@ public class CreateUserStateTest {
 
     @Test
     public void testOnSetVariable() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         CreateUserState state = new CreateUserState();
         assertTrue(state.onSetVariable(ctx, "", "", "") instanceof CreateUserState);

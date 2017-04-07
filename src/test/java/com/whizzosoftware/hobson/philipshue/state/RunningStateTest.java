@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2014 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.device.MockDeviceManager;
@@ -22,7 +24,7 @@ import static org.junit.Assert.*;
 public class RunningStateTest {
     @Test
     public void testOnRefresh() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertNull(ctx.getPluginStatus());
@@ -37,7 +39,7 @@ public class RunningStateTest {
     @Test
     public void testOnBridgeResponseWithLights() {
         MockDeviceManager dm = new MockDeviceManager();
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         plugin.setDeviceManager(dm);
         MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
@@ -61,7 +63,7 @@ public class RunningStateTest {
 
     @Test
     public void testOnBridgeHostUpdate() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
@@ -69,7 +71,7 @@ public class RunningStateTest {
 
     @Test
     public void testOnBridgeReuqestFailure() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         RunningState state = new RunningState();
         assertTrue(state.onBridgeRequestFailure(ctx, null, new Exception()) instanceof RunningState);
@@ -78,7 +80,7 @@ public class RunningStateTest {
     @Test
     public void testOnSetVariable() {
         MockDeviceManager dm = new MockDeviceManager();
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         plugin.setDeviceManager(dm);
         MockStateContext ctx = new MockStateContext(plugin, "host");
         ctx.createHueLight(new Light("1", "light1", "model1", null));

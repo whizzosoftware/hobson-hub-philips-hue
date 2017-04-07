@@ -1,21 +1,22 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2014 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.philipshue;
 
 import com.whizzosoftware.hobson.api.color.Color;
-import com.whizzosoftware.hobson.api.device.AbstractHobsonDevice;
 import com.whizzosoftware.hobson.api.device.DeviceType;
-import com.whizzosoftware.hobson.api.property.PropertyContainer;
+import com.whizzosoftware.hobson.api.device.proxy.AbstractHobsonDeviceProxy;
+import com.whizzosoftware.hobson.api.event.device.DeviceUnavailableEvent;
 import com.whizzosoftware.hobson.api.property.TypedProperty;
-import com.whizzosoftware.hobson.api.variable.HobsonVariable;
+import com.whizzosoftware.hobson.api.variable.DeviceVariableState;
 import com.whizzosoftware.hobson.api.variable.VariableConstants;
-import com.whizzosoftware.hobson.api.variable.VariableContext;
-import com.whizzosoftware.hobson.api.variable.VariableUpdate;
+import com.whizzosoftware.hobson.api.variable.VariableMask;
 import com.whizzosoftware.hobson.philipshue.api.dto.Light;
 import com.whizzosoftware.hobson.philipshue.api.dto.LightState;
 import com.whizzosoftware.hobson.philipshue.api.dto.GetLightAttributeAndStateRequest;
@@ -24,15 +25,15 @@ import com.whizzosoftware.hobson.philipshue.state.StateContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A class that represents a Hobson device for a Hue light.
  *
  * @author Dan Noguerol
  */
-public class HueLight extends AbstractHobsonDevice {
+public class HueLight extends AbstractHobsonDeviceProxy {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     private final String model;
@@ -50,9 +51,8 @@ public class HueLight extends AbstractHobsonDevice {
      * @param context the StateContext instance to use
      */
     public HueLight(HuePlugin plugin, String id, String model, String defaultName, StateContext context) {
-        super(plugin, id);
+        super(plugin, id, defaultName, DeviceType.LIGHTBULB);
         this.model = model;
-        setDefaultName(defaultName);
         this.context = context;
     }
 
@@ -66,10 +66,12 @@ public class HueLight extends AbstractHobsonDevice {
     }
 
     @Override
-    public void onStartup(PropertyContainer config) {
+    public void onStartup(String name, Map<String,Object> config) {
         long now = System.currentTimeMillis();
-        publishVariable(VariableConstants.COLOR, initialColor, HobsonVariable.Mask.READ_WRITE, initialColor != null ? now : null);
-        publishVariable(VariableConstants.ON, initialOnValue, HobsonVariable.Mask.READ_WRITE, initialOnValue != null ? now : null);
+        publishVariables(
+            createDeviceVariable(VariableConstants.COLOR, VariableMask.READ_WRITE, initialColor, initialColor != null ? now : null),
+            createDeviceVariable(VariableConstants.ON, VariableMask.READ_WRITE, initialOnValue, initialOnValue != null ? now : null)
+        );
     }
 
     @Override
@@ -77,8 +79,18 @@ public class HueLight extends AbstractHobsonDevice {
     }
 
     @Override
-    public DeviceType getType() {
-        return DeviceType.LIGHTBULB;
+    public String getManufacturerName() {
+        return "Philips";
+    }
+
+    @Override
+    public String getManufacturerVersion() {
+        return null;
+    }
+
+    @Override
+    public String getModelName() {
+        return model;
     }
 
     @Override
@@ -87,26 +99,32 @@ public class HueLight extends AbstractHobsonDevice {
     }
 
     @Override
-    protected TypedProperty[] createSupportedProperties() {
+    public void onDeviceConfigurationUpdate(Map<String, Object> map) {
+    }
+
+    @Override
+    protected TypedProperty[] getConfigurationPropertyTypes() {
         return null;
     }
 
     @Override
-    public void onSetVariable(String variableName, Object value) {
-        logger.debug("Setting variable for device {} ({}={})", getContext(), variableName, value);
+    public void onSetVariables(Map<String,Object> values) {
+        logger.debug("Setting variables for device {}: {})", getContext(), values);
 
         Boolean on = null;
         Color color = null;
 
-        if (VariableConstants.ON.equals(variableName)) {
-            if (value instanceof String) {
-                on = Boolean.parseBoolean((String) value);
-            } else if (value instanceof Boolean) {
-                on = (Boolean)value;
+        for (String name : values.keySet()) {
+            Object value = values.get(name);
+            if (VariableConstants.ON.equals(name)) {
+                if (value instanceof String) {
+                    on = Boolean.parseBoolean((String) value);
+                } else if (value instanceof Boolean) {
+                    on = (Boolean) value;
+                }
+            } else if (VariableConstants.COLOR.equals(name)) {
+                color = new Color((String) value);
             }
-        } else if (VariableConstants.COLOR.equals(variableName)) {
-            logger.debug("Setting variable for device {} ({}={})", getContext(), variableName, value);
-            color = new Color((String)value);
         }
 
         if (on != null || color != null) {
@@ -123,43 +141,47 @@ public class HueLight extends AbstractHobsonDevice {
 
     void onLightState(LightState state) {
         if (state != null) {
-            List<VariableUpdate> updates = null;
+            Map<String,Object> updates = null;
 
             long now = System.currentTimeMillis();
 
             // set the check-in time
-            setDeviceAvailability(state.isReachable(), state.isReachable() ? now : null);
+            if (state.isReachable()) {
+                setLastCheckin(now);
 
-            HobsonVariable var = getVariable(VariableConstants.ON);
-            if (var != null) {
-                Boolean on = state.getOn();
-                if (!state.isReachable()) {
-                    on = null;
-                }
-                if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
-                    logger.debug("Detected change in on status for {}: {} (old value was {})", getContext(), state.getOn(), var.getValue());
-                    updates = new ArrayList<>();
-                    updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.ON), on, now));
-                }
-            }
-
-            var = getVariable(VariableConstants.COLOR);
-            if (var != null) {
-                String color = convertLightStateToColor(state);
-                if (!state.isReachable()) {
-                    color = null;
-                }
-                if ((var.getValue() == null && color != null) || (color != null && !var.getValue().equals(color))) {
-                    logger.debug("Detected change in color status for {}: {} (old value was {})", getContext(), color, var.getValue());
-                    if (updates == null) {
-                        updates = new ArrayList<>();
+                DeviceVariableState var = getVariableState(VariableConstants.ON);
+                if (var != null) {
+                    Boolean on = state.getOn();
+                    if (!state.isReachable()) {
+                        on = null;
                     }
-                    updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.COLOR), color, now));
+                    if ((var.getValue() == null && on != null) || (var.getValue() != null && !var.getValue().equals(on))) {
+                        logger.debug("Detected change in on status for {}: {} (old value was {})", getContext(), state.getOn(), var.getValue());
+                        updates = new HashMap<>();
+                        updates.put(VariableConstants.ON, on);
+                    }
                 }
-            }
 
-            if (updates != null) {
-                fireVariableUpdateNotifications(updates);
+                var = getVariableState(VariableConstants.COLOR);
+                if (var != null) {
+                    String color = convertLightStateToColor(state);
+                    if (!state.isReachable()) {
+                        color = null;
+                    }
+                    if ((var.getValue() == null && color != null) || (color != null && !var.getValue().equals(color))) {
+                        logger.debug("Detected change in color status for {}: {} (old value was {})", getContext(), color, var.getValue());
+                        if (updates == null) {
+                            updates = new HashMap<>();
+                        }
+                        updates.put(VariableConstants.COLOR, color);
+                    }
+                }
+
+                if (updates != null) {
+                    setVariableValues(updates);
+                }
+            } else {
+                postEvent(new DeviceUnavailableEvent(now, getContext()));
             }
         }
     }
@@ -169,10 +191,10 @@ public class HueLight extends AbstractHobsonDevice {
 
         // set all variables to null to indicate that the current state of this light is now unknown
         long now = System.currentTimeMillis();
-        List<VariableUpdate> updates = new ArrayList<>();
-        updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.ON), null, now));
-        updates.add(new VariableUpdate(VariableContext.create(getContext(), VariableConstants.COLOR), null, now));
-        fireVariableUpdateNotifications(updates);
+        Map<String,Object> updates = new HashMap<>();
+        updates.put(VariableConstants.ON, now);
+        updates.put(VariableConstants.COLOR, now);
+        setVariableValues(updates);
     }
 
     Integer convertBrightnessToLevel(Integer brightness) {

@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2014 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.philipshue.api.dto.BridgeResponse;
@@ -23,7 +25,7 @@ public interface State {
      *
      * @return the next transition state
      */
-    public State onRefresh(StateContext context);
+    State onRefresh(StateContext context);
 
     /**
      * Callback when the bridge host configuration changes.
@@ -32,7 +34,7 @@ public interface State {
      *
      * @return the next transition state
      */
-    public State onBridgeHostUpdate(StateContext context);
+    State onBridgeHostUpdate(StateContext context);
 
     /**
      * Callback when a response from the bridge is received.
@@ -42,7 +44,7 @@ public interface State {
      *
      * @return the next transition state
      */
-    public State onBridgeResponse(StateContext context, BridgeResponse response);
+    State onBridgeResponse(StateContext context, BridgeResponse response);
 
     /**
      * Callback when a request to the bridge fails.
@@ -53,7 +55,7 @@ public interface State {
      *
      * @return the next transition state
      */
-    public State onBridgeRequestFailure(StateContext context, Object requestContext, Throwable t);
+    State onBridgeRequestFailure(StateContext context, Object requestContext, Throwable t);
 
     /**
      * Callback when a variable update request occurs.
@@ -65,5 +67,5 @@ public interface State {
      *
      * @return the next transition state
      */
-    public State onSetVariable(StateContext context, String deviceId, String name, Object value);
+    State onSetVariable(StateContext context, String deviceId, String name, Object value);
 }

@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2014 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.hobson.philipshue.state;
 
 import com.whizzosoftware.hobson.api.plugin.PluginStatus;
@@ -24,7 +26,7 @@ public class AuthorizingStateTest {
     @Test
     public void testInit() {
         AuthorizingState state = new AuthorizingState();
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
@@ -42,7 +44,7 @@ public class AuthorizingStateTest {
     @Test
     public void testInitWithAuthError() {
         AuthorizingState state = new AuthorizingState();
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
@@ -58,7 +60,7 @@ public class AuthorizingStateTest {
     @Test
     public void testInitWithOtherError() {
         AuthorizingState state = new AuthorizingState();
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
@@ -75,7 +77,7 @@ public class AuthorizingStateTest {
     @Test
     public void testInitWithUnexpectedResponse() {
         AuthorizingState state = new AuthorizingState();
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         assertEquals(0, ctx.getGetAllLightRequestsCount());
 
@@ -91,7 +93,7 @@ public class AuthorizingStateTest {
 
     @Test
     public void testInitWithTimeouts() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertEquals(0, ctx.getGetAllLightRequestsCount());
@@ -137,7 +139,7 @@ public class AuthorizingStateTest {
 
     @Test
     public void testOnBridgeHostUpdate() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertTrue(state.onBridgeHostUpdate(ctx) instanceof InitializingState);
@@ -145,7 +147,7 @@ public class AuthorizingStateTest {
 
     @Test
     public void testOnBridgeRequestFailure() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertNull(ctx.getPluginStatus());
@@ -155,7 +157,7 @@ public class AuthorizingStateTest {
 
     @Test
     public void testOnSetVariable() {
-        HuePlugin plugin = new HuePlugin("plugin");
+        HuePlugin plugin = new HuePlugin("plugin", "version", "description");
         MockStateContext ctx = new MockStateContext(plugin, "host");
         AuthorizingState state = new AuthorizingState();
         assertTrue(state.onSetVariable(ctx, "", "", "") instanceof AuthorizingState);

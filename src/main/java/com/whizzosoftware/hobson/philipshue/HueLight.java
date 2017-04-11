@@ -40,6 +40,7 @@ public class HueLight extends AbstractHobsonDeviceProxy {
     private StateContext context;
     private Boolean initialOnValue;
     private String initialColor;
+    private boolean available;
 
     /**
      * Constructor.
@@ -54,6 +55,7 @@ public class HueLight extends AbstractHobsonDeviceProxy {
         super(plugin, id, defaultName, DeviceType.LIGHTBULB);
         this.model = model;
         this.context = context;
+        this.available = false;
     }
 
     public HueLight(HuePlugin plugin, String id, String model, String defaultName, StateContext context, Light light) {
@@ -141,12 +143,15 @@ public class HueLight extends AbstractHobsonDeviceProxy {
 
     void onLightState(LightState state) {
         if (state != null) {
-            Map<String,Object> updates = null;
-
             long now = System.currentTimeMillis();
+            Map<String,Object> updates = null;
 
             // set the check-in time
             if (state.isReachable()) {
+                logger.debug("Received state update for reachable light {}: {}", getContext(), state);
+
+                available = true;
+
                 setLastCheckin(now);
 
                 DeviceVariableState var = getVariableState(VariableConstants.ON);
@@ -180,7 +185,8 @@ public class HueLight extends AbstractHobsonDeviceProxy {
                 if (updates != null) {
                     setVariableValues(updates);
                 }
-            } else {
+            } else if (available) {
+                available = false;
                 postEvent(new DeviceUnavailableEvent(now, getContext()));
             }
         }

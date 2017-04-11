@@ -38,6 +38,7 @@ public class HueBridgeList {
                     // make sure it's not a bridge we already know about
                     String host = new URI(ssdp.getLocation()).getHost();
                     if (!discoveredBridgeLocations.contains(host)) {
+                        logger.debug("Detected Hue bridge at {}", host);
                         discoveredBridgeLocations.add(host);
                         return host;
                     }

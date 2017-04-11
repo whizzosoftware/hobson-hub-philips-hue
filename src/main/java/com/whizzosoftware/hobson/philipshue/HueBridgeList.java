@@ -9,6 +9,8 @@ package com.whizzosoftware.hobson.philipshue;
 
 import com.whizzosoftware.hobson.api.disco.DeviceAdvertisement;
 import com.whizzosoftware.hobson.ssdp.SSDPPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,6 +24,8 @@ import java.util.List;
  * @author Dan Noguerol
  */
 public class HueBridgeList {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final List<String> discoveredBridgeLocations = new ArrayList<>();
 
     public String addDeviceAdvertisement(DeviceAdvertisement advertisement) throws URISyntaxException {
@@ -37,8 +41,14 @@ public class HueBridgeList {
                         discoveredBridgeLocations.add(host);
                         return host;
                     }
+                } else {
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("Advertisement doesn't appear to be a Hue bridge: {}", ssdp.getServer());
+                    }
                 }
             }
+        } else if (logger.isTraceEnabled()) {
+            logger.trace("Ignoring non-SSDP advertisement");
         }
         return null;
     }

@@ -69,8 +69,11 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
             if (bridgeHost != null) {
                 setBridgeHost(bridgeHost);
             } else {
-                for (DeviceAdvertisement adv : getDeviceAdvertisementSnapshot(SSDPPacket.PROTOCOL_ID)) {
-                    processDeviceAdvertisement(adv);
+                Collection<DeviceAdvertisement> advs = getDeviceAdvertisementSnapshot(SSDPPacket.PROTOCOL_ID);
+                if (advs != null) {
+                    for (DeviceAdvertisement adv : advs) {
+                        processDeviceAdvertisement(adv);
+                    }
                 }
             }
         } catch (HueException e) {
@@ -121,6 +124,9 @@ public class HuePlugin extends AbstractHttpClientPlugin implements StateContext,
 
     @EventHandler
     public void onDeviceAdvertisement(DeviceAdvertisementEvent event) {
+        if (logger.isTraceEnabled()) {
+            logger.trace("Received device advertisement: {}", event);
+        }
         processDeviceAdvertisement(event.getAdvertisement());
     }
 

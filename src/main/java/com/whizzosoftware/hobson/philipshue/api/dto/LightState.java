@@ -36,6 +36,8 @@ public class LightState {
      * @param hue the hue value (0-65535)
      * @param saturation the saturation value (1-254)
      * @param brightness the brightness value (1-254)
+     * @param ct color temperature
+     * @param colorMode the color mode
      * @param effect the effect
      * @param model the model of light
      * @param reachable is light reachable?
